@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { fetchOrderDetail, type OrderDetail } from '@/orders/detail';
+import { fetchOrderDetail, type OrderDetail, type OrderLine } from '@/orders/detail';
 import { googleMapsDestinationUrl } from '@/orders/optimize';
 import { Banner, Button, Card, Header, Spinner } from '@/ui/primitives';
 import { useTranslation } from '@/i18n/provider';
@@ -30,6 +30,11 @@ export function OrderDetailScreen() {
       }
     })();
   }, [key, autoOpenStatus]);
+
+  // Collapse lines that share the same item (typically split across
+  // multiple lots) into a single row summing the quantities, so the
+  // driver sees one entry per product.
+  const lines = useMemo(() => collapseLines(order?.lines ?? []), [order]);
 
   if (!order && !error) {
     return (
@@ -81,11 +86,11 @@ export function OrderDetailScreen() {
             <Card>
               <div className="text-sm font-semibold">{t('detail.lines')}</div>
               <ul className="mt-2 flex flex-col gap-1 text-sm">
-                {order.lines.map((l, i) => (
+                {lines.map((l, i) => (
                   <li key={i} className="flex justify-between gap-2 border-b border-border py-1 last:border-b-0">
                     <span>{l.itemName || l.itemCode || `#${i + 1}`}</span>
                     <span className="text-muted">
-                      {l.qty ?? ''}
+                      {l.qty != null ? formatQty(l.qty) : ''}
                       {l.unit ? ` ${l.unit}` : ''}
                     </span>
                   </li>
@@ -121,4 +126,33 @@ export function OrderDetailScreen() {
       )}
     </div>
   );
+}
+
+/** Group adjacent lots of the same product into one row by summing QTY1.
+ *  Keys on itemName, falling back to itemCode / mtrl so rows that lack a
+ *  friendly name still collapse when they're actually the same material. */
+function collapseLines(raw: OrderLine[]): OrderLine[] {
+  const groups = new Map<string, OrderLine>();
+  for (const l of raw) {
+    const key = (l.itemName || l.itemCode || l.mtrl || '').trim();
+    if (!key) {
+      groups.set(`__u${groups.size}`, { ...l });
+      continue;
+    }
+    const prev = groups.get(key);
+    if (prev) {
+      prev.qty = (prev.qty ?? 0) + (l.qty ?? 0);
+      prev.amount = (prev.amount ?? 0) + (l.amount ?? 0);
+      if (!prev.unit && l.unit) prev.unit = l.unit;
+    } else {
+      groups.set(key, { ...l });
+    }
+  }
+  return Array.from(groups.values());
+}
+
+function formatQty(n: number): string {
+  // Drop trailing zeroes but keep meaningful decimals (e.g. 7.92, 15.82).
+  const s = n.toFixed(3);
+  return s.replace(/\.?0+$/, '');
 }
