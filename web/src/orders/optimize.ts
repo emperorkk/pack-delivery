@@ -113,3 +113,34 @@ export function googleMapsMultiStopUrl(points: Array<{ lat: number; lon: number 
   const coords = points.map((p) => `${p.lat},${p.lon}`).join('/');
   return `https://www.google.com/maps/dir/${coords}`;
 }
+
+/** Build a multi-stop Google Maps URL using address strings or coords.
+ *  Google geocodes address strings server-side and is far more tolerant of
+ *  mixed Greek/Latin spelling than Nominatim, so we prefer a text address
+ *  whenever one is available and fall back to coords otherwise. */
+export function googleMapsMultiStopUrlFromStops(
+  stops: Array<{ address?: string; coords?: { lat: number; lon: number } }>
+): string | null {
+  const encoded = stops
+    .map((s) => {
+      if (s.address && s.address.trim()) return encodeURIComponent(s.address.trim());
+      if (s.coords) return `${s.coords.lat},${s.coords.lon}`;
+      return null;
+    })
+    .filter((v): v is string => v !== null);
+  if (encoded.length === 0) return null;
+  return `https://www.google.com/maps/dir/${encoded.join('/')}`;
+}
+
+export function googleMapsDestinationUrl(args: {
+  address?: string;
+  coords?: { lat: number; lon: number };
+}): string | null {
+  if (args.address && args.address.trim()) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(args.address.trim())}`;
+  }
+  if (args.coords) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${args.coords.lat},${args.coords.lon}`;
+  }
+  return null;
+}

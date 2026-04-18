@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchDeliveryList, type DeliveryRow } from '@/orders/list';
-import { optimizeRoute, googleMapsMultiStopUrl } from '@/orders/optimize';
+import { optimizeRoute, googleMapsMultiStopUrlFromStops } from '@/orders/optimize';
 import { newCorrelationId, writeSoactionAndAudit } from '@/orders/soaction';
 import { ACT_STATUS } from '@/orders/actStatus';
 import { Banner, Button, Card, Header, Spinner } from '@/ui/primitives';
@@ -67,8 +67,11 @@ export function DeliveryListScreen() {
 
   const mapsUrl = useMemo(() => {
     if (!rows) return null;
-    const pts = rows.map((r) => r.row.coords).filter((c): c is { lat: number; lon: number } => !!c);
-    return pts.length > 0 ? googleMapsMultiStopUrl(pts) : null;
+    const stops = rows.map(({ row }) => ({
+      address: [row.address, row.city, row.zip].map((s) => s?.trim()).filter(Boolean).join(', '),
+      coords: row.coords
+    }));
+    return googleMapsMultiStopUrlFromStops(stops);
   }, [rows]);
 
   return (

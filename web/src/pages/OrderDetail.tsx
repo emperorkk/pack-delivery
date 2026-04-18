@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchOrderDetail, type OrderDetail } from '@/orders/detail';
+import { googleMapsDestinationUrl } from '@/orders/optimize';
 import { Banner, Button, Card, Header, Spinner } from '@/ui/primitives';
 import { useTranslation } from '@/i18n/provider';
 import { StatusModal } from '@/orders/statusModal';
@@ -53,16 +54,26 @@ export function OrderDetailScreen() {
               <div className="mt-1 text-xs text-muted">FINDOC: {order.findoc}</div>
             </Card>
 
-            {order.coords && (
-              <a
-                href={`https://www.google.com/maps/dir/?api=1&destination=${order.coords.lat},${order.coords.lon}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-xl bg-accent px-4 py-3 text-center font-medium text-accent-fg"
-              >
-                {t('detail.openInMaps')}
-              </a>
-            )}
+            {(() => {
+              const fullAddress = [order.address, order.city, order.zip]
+                .map((s) => s?.trim())
+                .filter(Boolean)
+                .join(', ');
+              const href = googleMapsDestinationUrl({
+                address: fullAddress,
+                coords: order.coords
+              });
+              return href ? (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xl bg-accent px-4 py-3 text-center font-medium text-accent-fg"
+                >
+                  {t('detail.openInMaps')}
+                </a>
+              ) : null;
+            })()}
 
             <Card>
               <div className="text-sm font-semibold">{t('detail.lines')}</div>
