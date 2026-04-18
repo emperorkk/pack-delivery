@@ -4,9 +4,9 @@ import { loadSession } from '@/soft1/session';
 
 export type DeliveryRow = {
   /**
-   * Lookup qualifier we pass to `getData`. When the CST returns a
-   * SALDOC row KEY we use it directly; otherwise we build
-   * `FINDOC=<n>` which Soft1 resolves against the alternate index.
+   * Lookup qualifier we pass to `getData`. When the CST returns an
+   * explicit SALDOC row KEY we use it directly; otherwise we fall back
+   * to the raw FINDOC value — Soft1 accepts that directly as the KEY.
    */
   key: string;
   findoc: string;         // internal SALDOC.FINDOC (used by SOACTION writes)
@@ -67,7 +67,7 @@ function splitPipe(v: string | undefined): string | undefined {
 export function mapRow(r: RawRow): DeliveryRow {
   const findoc = pick(r, 'FINDOC', 'FINCODENUM') ?? '';
   const explicitKey = pick(r, 'KEY', 'SALDOC');
-  const key = explicitKey ?? (findoc ? `FINDOC=${findoc}` : '');
+  const key = explicitKey ?? findoc;
   const lat = toNum(pick(r, 'LAT', 'LATITUDE'));
   const lon = toNum(pick(r, 'LON', 'LONGITUDE'));
   return {

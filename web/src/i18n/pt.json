@@ -12,7 +12,7 @@
   "common.error": "Error",
   "common.shareLocation": "Share location",
   "login.title": "Sign in",
-  "login.serialNumber": "Serial number",
+  "login.serialNumber": "Soft1 Serial Number",
   "login.appId": "App ID",
   "login.username": "Username",
   "login.password": "Password",

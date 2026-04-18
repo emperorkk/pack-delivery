@@ -26,7 +26,7 @@ export async function resolveBarcode(barcode: string): Promise<ResolvedOrder | n
       const res = await soft1Call<GetDataResponse>({
         service: 'getData',
         OBJECT: 'SALDOC',
-        KEY: `FINDOC=${trimmed}`
+        KEY: trimmed
       });
       const row = res.SALDOC?.[0];
       if (!row) return null;

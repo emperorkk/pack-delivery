@@ -42,7 +42,7 @@ export function LoginScreen() {
           inputMode="numeric"
           value={serialNumber}
           onChange={(e) => setSerialNumber(e.target.value)}
-          placeholder="01104398142024"
+          placeholder="011..."
           required
         />
         <TextInput
