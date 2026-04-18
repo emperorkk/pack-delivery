@@ -99,6 +99,7 @@ export async function fetchDeliveryList(): Promise<DeliveryRow[]> {
   const settings = loadSettings();
   const res = await cstCall<ListingResponse>('getDeliveryListing', {
     SERIES: settings.series,
+    UPDATESERIES: settings.seriesUpdate,
     SOREDIR: settings.soredir,
     ACTOR: s.driverRefId
   });
