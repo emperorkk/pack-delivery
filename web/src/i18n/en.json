@@ -32,6 +32,7 @@
   "list.setNext": "Set as next delivery",
   "list.scan": "Scan",
   "list.loadNew": "Load new deliveries",
+  "list.clearOrder": "Clear sort order",
   "scanLoad.title": "Load deliveries",
   "scanLoad.hint": "Scan each order barcode to mark it loaded onto the truck.",
   "scanLoad.notFound": "No order matched this barcode",

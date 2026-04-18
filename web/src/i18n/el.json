@@ -32,6 +32,7 @@
   "list.setNext": "Επόμενη παράδοση",
   "list.scan": "Σάρωση",
   "list.loadNew": "Φόρτωση νέων παραδόσεων",
+  "list.clearOrder": "Εκκαθάριση ταξινόμησης",
   "scanLoad.title": "Φόρτωση παραδόσεων",
   "scanLoad.hint": "Σαρώστε το barcode κάθε παραγγελίας για να φορτωθεί στο όχημα.",
   "scanLoad.notFound": "Δεν βρέθηκε παραγγελία για αυτό το barcode",
