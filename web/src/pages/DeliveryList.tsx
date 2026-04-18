@@ -6,7 +6,7 @@ import { newCorrelationId, writeSoactionAndAudit } from '@/orders/soaction';
 import { ACT_STATUS } from '@/orders/actStatus';
 import { Banner, Button, Card, Header, Spinner } from '@/ui/primitives';
 import { useTranslation } from '@/i18n/provider';
-import { currentFix, hasFix } from '@/geo/currentFix';
+import { requestFreshFix } from '@/geo/currentFix';
 import { clearSession } from '@/soft1/session';
 import { pushGeo } from '@/geo/transport';
 
@@ -43,7 +43,7 @@ export function DeliveryListScreen() {
     if (!rows) return;
     setLoading(true);
     try {
-      const origin = hasFix() ? { lat: Number(currentFix.lat), lon: Number(currentFix.lon) } : null;
+      const origin = await requestFreshFix();
       const next = await optimizeRoute(origin, rows.map((r) => r.row));
       setRows(next);
       setOptimized(true);

@@ -58,3 +58,29 @@ export function onFix(fn: Listener): () => void {
 export function hasFix(): boolean {
   return currentFix.lat !== '' && currentFix.lon !== '';
 }
+
+/**
+ * Kick off a single high-accuracy geolocation reading and return it as
+ * soon as it arrives (or fall back to the cached `currentFix` on error).
+ * Used at moments where we want the *current* location, not whatever the
+ * background watcher happened to pick up last — e.g. when the driver
+ * taps "Optimize" and expects the route to start from here.
+ */
+export function requestFreshFix(timeoutMs = 8_000): Promise<{ lat: number; lon: number } | null> {
+  return new Promise((resolve) => {
+    if (!('geolocation' in navigator)) {
+      resolve(hasFix() ? { lat: Number(currentFix.lat), lon: Number(currentFix.lon) } : null);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setFix(pos);
+        resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+      },
+      () => {
+        resolve(hasFix() ? { lat: Number(currentFix.lat), lon: Number(currentFix.lon) } : null);
+      },
+      { enableHighAccuracy: true, maximumAge: 5_000, timeout: timeoutMs }
+    );
+  });
+}

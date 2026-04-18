@@ -115,21 +115,36 @@ export function googleMapsMultiStopUrl(points: Array<{ lat: number; lon: number 
 }
 
 /** Build a multi-stop Google Maps URL using address strings or coords.
- *  Google geocodes address strings server-side and is far more tolerant of
- *  mixed Greek/Latin spelling than Nominatim, so we prefer a text address
- *  whenever one is available and fall back to coords otherwise. */
+ *  Uses the API-1 form and omits `origin`, which makes Maps start from the
+ *  device's current location. Google geocodes address strings server-side
+ *  and is far more tolerant of mixed Greek/Latin spelling than Nominatim,
+ *  so we prefer a text address whenever one is available and fall back to
+ *  coords otherwise. */
 export function googleMapsMultiStopUrlFromStops(
   stops: Array<{ address?: string; coords?: { lat: number; lon: number } }>
 ): string | null {
-  const encoded = stops
+  const resolved = stops
     .map((s) => {
-      if (s.address && s.address.trim()) return encodeURIComponent(s.address.trim());
+      const addr = s.address?.trim();
+      if (addr) return addr;
       if (s.coords) return `${s.coords.lat},${s.coords.lon}`;
       return null;
     })
     .filter((v): v is string => v !== null);
-  if (encoded.length === 0) return null;
-  return `https://www.google.com/maps/dir/${encoded.join('/')}`;
+  if (resolved.length === 0) return null;
+
+  const destination = resolved[resolved.length - 1]!;
+  const waypoints = resolved.slice(0, -1);
+  const params = new URLSearchParams({
+    api: '1',
+    travelmode: 'driving',
+    destination
+  });
+  // API-1 allows up to 9 intermediate waypoints — trim if we somehow exceed.
+  if (waypoints.length > 0) {
+    params.set('waypoints', waypoints.slice(-9).join('|'));
+  }
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
 
 export function googleMapsDestinationUrl(args: {
