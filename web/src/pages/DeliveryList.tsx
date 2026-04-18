@@ -145,10 +145,10 @@ export function DeliveryListScreen() {
         title={t('list.title')}
         right={
           <div className="flex gap-2">
-            <Link to="/scan/load" className="rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm">
+            <Link to="/scan/load" className="pd-press rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm hover:bg-[color-mix(in_srgb,var(--surface-2)_90%,var(--fg)_10%)]">
               {t('list.loadNewShort')}
             </Link>
-            <Link to="/settings" className="rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm">
+            <Link to="/settings" className="pd-press rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm hover:bg-[color-mix(in_srgb,var(--surface-2)_90%,var(--fg)_10%)]">
               ⚙
             </Link>
           </div>
@@ -170,7 +170,7 @@ export function DeliveryListScreen() {
             href={mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-xl bg-accent px-4 py-3 text-center font-medium text-accent-fg"
+            className="pd-accent-gradient pd-press rounded-2xl px-4 py-3 text-center font-medium text-accent-fg"
           >
             {t('detail.openInMaps')}
           </a>
@@ -261,7 +261,7 @@ function SortableRow({ row, seq, onOpen, onSetNext, setNextLabel }: SortableRowP
           <div className="flex-1">
             <div className="flex items-center gap-2">
               {seq != null && (
-                <span className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-accent px-2 text-xs font-bold text-accent-fg">
+                <span className="pd-accent-gradient inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-2 text-xs font-bold text-accent-fg ring-1 ring-black/10">
                   {seq}
                 </span>
               )}

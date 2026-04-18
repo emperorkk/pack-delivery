@@ -71,7 +71,7 @@ export function OrderDetailScreen() {
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-xl bg-accent px-4 py-3 text-center font-medium text-accent-fg"
+                  className="pd-accent-gradient pd-press rounded-2xl px-4 py-3 text-center font-medium text-accent-fg"
                 >
                   {t('detail.openInMaps')}
                 </a>
