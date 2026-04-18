@@ -1,0 +1,11 @@
+name = "pack-delivery-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-08-06"
+
+[vars]
+# Optional allowlist of serial numbers. Leave empty to proxy to any
+# <sn>.oncloud.gr tenant the client requests.
+ALLOWED_SERIALS = ""
+
+# Comma-separated list of origins allowed to hit this proxy. "*" allows any.
+ALLOWED_ORIGINS = "*"
