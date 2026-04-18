@@ -1,6 +1,12 @@
 export const config = {
-  soft1Proxy: (import.meta.env.VITE_SOFT1_PROXY as string | undefined)?.replace(/\/$/, '') ?? '',
-  cstDownloadUrl: (import.meta.env.VITE_CST_DOWNLOAD_URL as string | undefined) ?? '',
+  /**
+   * Same-origin proxy prefix. In production the Worker hosts both the PWA
+   * (at `/`) and the Soft1 reverse proxy (at `/api/<sn>/s1services...`),
+   * so the default `/api` keeps every request same-origin and CORS-free.
+   * Override with VITE_SOFT1_PROXY to point at a remote Worker host.
+   */
+  soft1Proxy: (import.meta.env.VITE_SOFT1_PROXY as string | undefined)?.replace(/\/$/, '') ?? '/api',
+  cstDownloadUrl: (import.meta.env.VITE_CST_DOWNLOAD_URL as string | undefined) ?? '/aicmp.pack-delivery.CST',
   defaultLocale: 'el' as const,
   defaultTheme: 'slate' as const
 };

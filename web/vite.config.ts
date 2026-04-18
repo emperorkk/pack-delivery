@@ -33,5 +33,17 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, 'src') }
   },
-  server: { port: 5173, host: true }
+  server: {
+    port: 5173,
+    host: true,
+    // Forward `/api/*` to the deployed Worker during local dev so the PWA
+    // can talk to a real Soft1 tenant without running wrangler locally.
+    proxy: {
+      '/api': {
+        target: 'https://pack-delivery.kkourentzes.workers.dev',
+        changeOrigin: true,
+        secure: true
+      }
+    }
+  }
 });

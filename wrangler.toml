@@ -1,0 +1,23 @@
+name = "pack-delivery"
+main = "worker/src/index.ts"
+compatibility_date = "2024-08-06"
+
+# Workers Static Assets — serves the PWA at `/` with SPA fallback
+# (every unknown path resolves to /index.html so React Router can take over).
+[assets]
+directory = "./web/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+# Build the PWA before wrangler bundles the worker. Cloudflare's GitHub
+# integration runs this automatically on each push to the connected branch.
+[build]
+command = "cd web && npm ci && npm run build"
+
+[vars]
+# Optional allowlist of serial numbers. Empty string → proxy any tenant.
+ALLOWED_SERIALS = ""
+# Comma-separated origins; "*" allows any. Same-origin requests from the
+# PWA itself don't trigger CORS, so this only matters if a different host's
+# app points at this proxy.
+ALLOWED_ORIGINS = "*"
