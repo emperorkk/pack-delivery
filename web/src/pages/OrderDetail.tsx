@@ -93,9 +93,9 @@ export function OrderDetailScreen() {
             <Card>
               <div className="text-sm font-semibold">{t('detail.totals')}</div>
               <div className="mt-2 text-sm">
-                {order.totals.net != null && <div>Net: {order.totals.net.toFixed(2)}</div>}
-                {order.totals.vat != null && <div>VAT: {order.totals.vat.toFixed(2)}</div>}
-                {order.totals.gross != null && <div className="font-semibold">Total: {order.totals.gross.toFixed(2)}</div>}
+                {order.totals.gross != null && (
+                  <div className="font-semibold">Total: {order.totals.gross.toFixed(2)}</div>
+                )}
               </div>
             </Card>
 
