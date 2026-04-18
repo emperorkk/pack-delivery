@@ -47,6 +47,66 @@ function isSerialAllowed(env: Env, serial: string): boolean {
   return list.includes(serial);
 }
 
+function parseCharset(contentType: string | null): string | null {
+  if (!contentType) return null;
+  const m = /charset=([^;\s]+)/i.exec(contentType);
+  return m ? m[1].toLowerCase().replace(/^"|"$/g, '') : null;
+}
+
+function isTextual(contentType: string | null): boolean {
+  if (!contentType) return true; // Soft1 CST/JSON paths don't serve binary
+  return /^(text\/|application\/(?:json|javascript|xml|x-www-form-urlencoded)|application\/.*\+(?:json|xml))/i.test(
+    contentType
+  );
+}
+
+/**
+ * Soft1 CST endpoints frequently emit Greek text as windows-1253 (ISO 8859-7 /
+ * legacy Greek codepage) even when the request carries `enc:"utf8"`. The
+ * browser's `res.json()` is hard-coded to UTF-8, which mojibakes Greek into
+ * U+FFFD. We normalise everything to UTF-8 at the proxy so callers can treat
+ * the response as plain JSON.
+ */
+async function normaliseToUtf8(res: Response): Promise<Response> {
+  const contentType = res.headers.get('content-type');
+  if (!isTextual(contentType)) return res;
+
+  const buf = await res.arrayBuffer();
+  const declared = parseCharset(contentType);
+  let text: string;
+  if (declared && declared !== 'utf-8' && declared !== 'utf8') {
+    try {
+      text = new TextDecoder(declared, { fatal: false }).decode(buf);
+    } catch {
+      text = new TextDecoder('utf-8', { fatal: false }).decode(buf);
+    }
+  } else {
+    // No (or UTF-8) charset declared — trust UTF-8 but fall back to
+    // windows-1253 if the decoded text is riddled with replacement chars.
+    const utf8 = new TextDecoder('utf-8', { fatal: false }).decode(buf);
+    if (utf8.includes('\uFFFD')) {
+      try {
+        text = new TextDecoder('windows-1253', { fatal: false }).decode(buf);
+      } catch {
+        text = utf8;
+      }
+    } else {
+      text = utf8;
+    }
+  }
+
+  const newHeaders = new Headers(res.headers);
+  const baseCT = (contentType ?? 'application/json').replace(/;\s*charset=[^;]*/i, '');
+  newHeaders.set('content-type', `${baseCT}; charset=utf-8`);
+  newHeaders.delete('content-length');
+  newHeaders.delete('content-encoding');
+  return new Response(text, {
+    status: res.status,
+    statusText: res.statusText,
+    headers: newHeaders
+  });
+}
+
 async function handleApi(req: Request, env: Env, url: URL): Promise<Response> {
   const origin = req.headers.get('origin');
   if (req.method === 'OPTIONS') {
@@ -87,7 +147,8 @@ async function handleApi(req: Request, env: Env, url: URL): Promise<Response> {
     });
   }
 
-  const proxied = new Response(res.body, res);
+  const normalised = await normaliseToUtf8(res);
+  const proxied = new Response(normalised.body, normalised);
   for (const [k, v] of Object.entries(corsHeaders(env, origin))) proxied.headers.set(k, v);
   return proxied;
 }
