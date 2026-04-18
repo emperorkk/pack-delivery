@@ -148,6 +148,13 @@ export function DeliveryListScreen() {
             <Link to="/scan/load" className="pd-press rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm hover:bg-[color-mix(in_srgb,var(--surface-2)_90%,var(--fg)_10%)]">
               {t('list.loadNewShort')}
             </Link>
+            <Link
+              to="/help"
+              aria-label={t('help.title')}
+              className="pd-press rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm hover:bg-[color-mix(in_srgb,var(--surface-2)_90%,var(--fg)_10%)]"
+            >
+              ?
+            </Link>
             <Link to="/settings" className="pd-press rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm hover:bg-[color-mix(in_srgb,var(--surface-2)_90%,var(--fg)_10%)]">
               ⚙
             </Link>

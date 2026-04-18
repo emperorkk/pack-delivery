@@ -8,6 +8,7 @@ import { OrderDetailScreen } from './pages/OrderDetail';
 import { SettingsScreen } from './pages/Settings';
 import { ScanScreen } from './pages/Scan';
 import { ScanLoadScreen } from './pages/ScanLoad';
+import { HelpScreen } from './pages/Help';
 import { useTranslation } from './i18n/provider';
 
 export function App() {
@@ -34,6 +35,7 @@ export function App() {
           <Route path="/scan" element={<Guard session={session}><ScanScreen /></Guard>} />
           <Route path="/scan/load" element={<Guard session={session}><ScanLoadScreen /></Guard>} />
           <Route path="/settings" element={<Guard session={session}><SettingsScreen /></Guard>} />
+          <Route path="/help" element={<HelpScreen />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
