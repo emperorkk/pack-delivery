@@ -68,9 +68,7 @@ export function TextArea({
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div
-      className={`pd-elevate pd-rise rounded-2xl border border-border bg-surface-2 p-4 ${className}`}
-    >
+    <div className={`pd-card pd-elevate pd-rise rounded-2xl p-4 ${className}`}>
       {children}
     </div>
   );
@@ -95,7 +93,7 @@ export function Banner({
 export function Header({ title, right }: { title: string; right?: ReactNode }) {
   return (
     <div className="pd-glass sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border px-4 py-3">
-      <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
+      <h1 className="pd-title text-lg font-semibold tracking-tight">{title}</h1>
       {right}
     </div>
   );

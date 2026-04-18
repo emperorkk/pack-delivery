@@ -23,6 +23,34 @@ body,
   scroll-behavior: smooth;
 }
 
+::selection {
+  background: color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--fg);
+}
+
+/* Brand-aware scrollbars so theming carries into the track. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--accent) 60%, transparent) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--accent) 70%, transparent);
+  background-clip: padding-box;
+}
+
 /* Mobile-first: app fills the viewport. On tablet+ desktop, centre a column. */
 .app-shell {
   min-height: 100dvh;
@@ -31,35 +59,47 @@ body,
   display: flex;
   justify-content: center;
   position: relative;
+  overflow: clip;
 }
 
+/* Slow-drifting aurora mesh — sits behind everything on the shell.
+   Runs at low opacity on mobile, more visible on desktop. */
+.app-shell::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(45% 35% at 18% 22%, color-mix(in srgb, var(--accent) 45%, transparent) 0%, transparent 70%),
+    radial-gradient(40% 40% at 82% 18%, color-mix(in srgb, var(--success) 35%, transparent) 0%, transparent 70%),
+    radial-gradient(55% 40% at 70% 85%, color-mix(in srgb, var(--warn) 30%, transparent) 0%, transparent 70%),
+    radial-gradient(50% 40% at 15% 85%, color-mix(in srgb, var(--accent) 30%, transparent) 0%, transparent 70%);
+  filter: blur(60px) saturate(140%);
+  opacity: 0.35;
+  animation: pd-aurora 28s ease-in-out infinite alternate;
+}
 .app-column {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 100%;
 }
 
 @media (min-width: 768px) {
-  .app-shell {
-    background:
-      radial-gradient(
-        1200px 700px at 50% -100px,
-        color-mix(in srgb, var(--accent) 18%, transparent) 0%,
-        transparent 60%
-      ),
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--surface) 60%, #000 40%) 0%,
-        color-mix(in srgb, var(--surface) 80%, #000 20%) 100%
-      );
+  .app-shell::before {
+    opacity: 0.55;
   }
   .app-column {
     max-width: 32rem;
-    background: var(--surface);
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    border-left: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    border-right: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    backdrop-filter: saturate(130%) blur(6px);
+    -webkit-backdrop-filter: saturate(130%) blur(6px);
     box-shadow:
-      0 30px 80px -30px color-mix(in srgb, #000 55%, transparent),
-      0 4px 20px -4px color-mix(in srgb, #000 25%, transparent);
+      0 40px 120px -40px color-mix(in srgb, #000 65%, transparent),
+      0 4px 20px -4px color-mix(in srgb, #000 30%, transparent);
   }
   .app-column.wide {
     max-width: 48rem;
@@ -81,36 +121,103 @@ textarea {
 :where(button, a, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
-/* Subtle, theme-aware elevation used by cards/sheets. */
+/* ──────────────────────────── Primitives ──────────────────────────── */
+
+/* Card with a subtle gradient border using the two-background trick. */
+.pd-card {
+  position: relative;
+  background:
+    linear-gradient(var(--surface-2), var(--surface-2)) padding-box,
+    linear-gradient(
+      140deg,
+      color-mix(in srgb, var(--accent) 55%, transparent) 0%,
+      color-mix(in srgb, var(--border) 70%, transparent) 35%,
+      color-mix(in srgb, var(--border) 60%, transparent) 65%,
+      color-mix(in srgb, var(--accent) 55%, transparent) 100%
+    ) border-box;
+  border: 1px solid transparent;
+}
+
+/* Layered depth for cards, sheets and banners. */
 .pd-elevate {
   box-shadow:
-    0 1px 0 color-mix(in srgb, var(--fg) 6%, transparent) inset,
-    0 10px 30px -14px color-mix(in srgb, #000 55%, transparent),
-    0 2px 6px -2px color-mix(in srgb, #000 25%, transparent);
+    0 1px 0 color-mix(in srgb, var(--fg) 8%, transparent) inset,
+    0 12px 36px -16px color-mix(in srgb, #000 60%, transparent),
+    0 4px 10px -4px color-mix(in srgb, #000 30%, transparent);
 }
 
-/* Accent gradient used by the primary button and the "Open in Maps" pill. */
+/* Primary button / anchor gradient, with a shine overlay on hover. */
 .pd-accent-gradient {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   background-image: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--accent) 90%, #fff 10%) 0%,
-    var(--accent) 55%,
-    color-mix(in srgb, var(--accent) 80%, #000 20%) 100%
+    135deg,
+    color-mix(in srgb, var(--accent) 88%, #fff 12%) 0%,
+    var(--accent) 45%,
+    color-mix(in srgb, var(--accent) 72%, #000 28%) 100%
   );
   box-shadow:
-    0 1px 0 color-mix(in srgb, #fff 25%, transparent) inset,
-    0 8px 18px -8px color-mix(in srgb, var(--accent) 70%, transparent),
+    0 1px 0 color-mix(in srgb, #fff 35%, transparent) inset,
+    0 10px 24px -10px color-mix(in srgb, var(--accent) 75%, transparent),
     0 2px 6px -1px color-mix(in srgb, #000 30%, transparent);
 }
+.pd-accent-gradient::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    color-mix(in srgb, #fff 40%, transparent) 50%,
+    transparent 80%
+  );
+  transform: translateX(-120%);
+  transition: transform 800ms ease;
+}
+.pd-accent-gradient:hover::after,
+.pd-accent-gradient:focus-visible::after {
+  transform: translateX(120%);
+}
 
-/* Translucent glass effect on the sticky header. */
+/* Sticky header: translucent glass + gradient underline. */
 .pd-glass {
   background: color-mix(in srgb, var(--surface) 72%, transparent);
   backdrop-filter: saturate(160%) blur(14px);
   -webkit-backdrop-filter: saturate(160%) blur(14px);
+  position: relative;
+}
+.pd-glass::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--accent) 70%, transparent) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Gradient text utility used for page titles. */
+.pd-title {
+  background: linear-gradient(
+    95deg,
+    var(--fg) 0%,
+    color-mix(in srgb, var(--accent) 60%, var(--fg) 40%) 50%,
+    var(--fg) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* Real circular spinner. */
@@ -127,23 +234,61 @@ textarea {
   animation: pd-spin 0.8s linear infinite;
 }
 
-/* Small fade-up animation for list items / cards arriving on screen. */
+/* Fade-up animation, with a small stagger when many cards mount at once. */
 @keyframes pd-rise {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .pd-rise {
-  animation: pd-rise 220ms ease-out both;
+  animation: pd-rise 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.pd-stagger > *:nth-child(1)  { animation-delay: 0ms; }
+.pd-stagger > *:nth-child(2)  { animation-delay: 40ms; }
+.pd-stagger > *:nth-child(3)  { animation-delay: 80ms; }
+.pd-stagger > *:nth-child(4)  { animation-delay: 120ms; }
+.pd-stagger > *:nth-child(5)  { animation-delay: 160ms; }
+.pd-stagger > *:nth-child(6)  { animation-delay: 200ms; }
+.pd-stagger > *:nth-child(7)  { animation-delay: 240ms; }
+.pd-stagger > *:nth-child(8)  { animation-delay: 280ms; }
+.pd-stagger > *:nth-child(n+9) { animation-delay: 320ms; }
+
+/* Pulsing halo — used on the route-sequence badge. */
+@keyframes pd-halo {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent); }
+  70%  { box-shadow: 0 0 0 10px color-mix(in srgb, var(--accent) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+.pd-halo {
+  animation: pd-halo 2.4s ease-out infinite;
 }
 
-/* Press feedback for tappable cards/buttons. */
+/* Press feedback for tappable elements. */
 .pd-press {
   transition:
     transform 120ms ease,
-    box-shadow 160ms ease,
+    box-shadow 200ms ease,
     background-color 160ms ease,
+    filter 200ms ease,
     opacity 120ms ease;
+}
+.pd-press:hover {
+  filter: brightness(1.04);
 }
 .pd-press:active {
   transform: translateY(1px) scale(0.995);
+}
+
+/* Slow aurora drift. */
+@keyframes pd-aurora {
+  0%   { transform: translate3d(-3%, -2%, 0) rotate(0deg) scale(1); }
+  50%  { transform: translate3d(3%, 2%, 0) rotate(6deg) scale(1.06); }
+  100% { transform: translate3d(-2%, 3%, 0) rotate(-4deg) scale(1.03); }
+}
+
+/* Respect reduced-motion preferences. */
+@media (prefers-reduced-motion: reduce) {
+  .app-shell::before { animation: none; }
+  .pd-rise { animation: none; }
+  .pd-halo { animation: none; }
+  .pd-accent-gradient::after { display: none; }
 }

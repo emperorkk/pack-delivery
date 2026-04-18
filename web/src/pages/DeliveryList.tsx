@@ -197,7 +197,7 @@ export function DeliveryListScreen() {
               items={rows.map((r) => r.row.key)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="flex flex-col gap-3">
+              <div className="pd-stagger flex flex-col gap-3">
                 {rows.map(({ row, seq }) => (
                   <SortableRow
                     key={row.key}
@@ -261,7 +261,11 @@ function SortableRow({ row, seq, onOpen, onSetNext, setNextLabel }: SortableRowP
           <div className="flex-1">
             <div className="flex items-center gap-2">
               {seq != null && (
-                <span className="pd-accent-gradient inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-2 text-xs font-bold text-accent-fg ring-1 ring-black/10">
+                <span
+                  className={`pd-accent-gradient inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-2 text-xs font-bold text-accent-fg ring-1 ring-black/10 ${
+                    seq === 1 ? 'pd-halo' : ''
+                  }`}
+                >
                   {seq}
                 </span>
               )}
