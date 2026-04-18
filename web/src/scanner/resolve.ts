@@ -7,7 +7,8 @@ export type ResolvedOrder = {
 };
 
 type FindocLookupResponse = { rows?: Array<{ FINDOC?: string; SALDOC?: string; KEY?: string }> };
-type GetDataResponse = { SALDOC?: Array<{ FINDOC?: string; KEY?: string }> };
+type GetDataPayload = { SALDOC?: Array<{ FINDOC?: string; KEY?: string }> };
+type GetDataResponse = GetDataPayload & { data?: GetDataPayload };
 
 /**
  * Resolve a scanned barcode to a SALDOC key.
@@ -28,7 +29,7 @@ export async function resolveBarcode(barcode: string): Promise<ResolvedOrder | n
         OBJECT: 'SALDOC',
         KEY: trimmed
       });
-      const row = res.SALDOC?.[0];
+      const row = (res.data ?? res).SALDOC?.[0];
       if (!row) return null;
       return { key: row.KEY ?? trimmed, findoc: row.FINDOC };
     } catch {
