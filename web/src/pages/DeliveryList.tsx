@@ -145,8 +145,8 @@ export function DeliveryListScreen() {
         title={t('list.title')}
         right={
           <div className="flex gap-2">
-            <Link to="/scan" className="rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm">
-              {t('list.scan')}
+            <Link to="/scan/load" className="rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm">
+              {t('list.loadNewShort')}
             </Link>
             <Link to="/settings" className="rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm">
               ⚙
@@ -164,7 +164,7 @@ export function DeliveryListScreen() {
             {t('list.optimize')}
           </Button>
         </div>
-        <Button onClick={() => nav('/scan/load')}>{t('list.loadNew')}</Button>
+        <Button onClick={() => nav('/scan')}>{t('list.scan')}</Button>
         {hasStoredOrder && mapsUrl && (
           <a
             href={mapsUrl}
