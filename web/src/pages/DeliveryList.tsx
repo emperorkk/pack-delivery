@@ -282,7 +282,7 @@ function SortableRow({ row, seq, onOpen, onSetNext, setNextLabel }: SortableRowP
         </div>
         <div className="mt-3 flex gap-2">
           <Button variant="secondary" className="flex-1" onClick={onOpen}>
-            ▶
+            🔍
           </Button>
           <Button className="flex-1" onClick={onSetNext}>
             {setNextLabel}
