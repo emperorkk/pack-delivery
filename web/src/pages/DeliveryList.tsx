@@ -96,6 +96,7 @@ export function DeliveryListScreen() {
             {t('list.optimize')}
           </Button>
         </div>
+        <Button onClick={() => nav('/scan/load')}>{t('list.loadNew')}</Button>
         {optimized && mapsUrl && (
           <a
             href={mapsUrl}

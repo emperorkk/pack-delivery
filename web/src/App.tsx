@@ -7,6 +7,7 @@ import { DeliveryListScreen } from './pages/DeliveryList';
 import { OrderDetailScreen } from './pages/OrderDetail';
 import { SettingsScreen } from './pages/Settings';
 import { ScanScreen } from './pages/Scan';
+import { ScanLoadScreen } from './pages/ScanLoad';
 import { useTranslation } from './i18n/provider';
 
 export function App() {
@@ -31,6 +32,7 @@ export function App() {
           <Route path="/orders" element={<Guard session={session}><DeliveryListScreen /></Guard>} />
           <Route path="/orders/:key" element={<Guard session={session}><OrderDetailScreen /></Guard>} />
           <Route path="/scan" element={<Guard session={session}><ScanScreen /></Guard>} />
+          <Route path="/scan/load" element={<Guard session={session}><ScanLoadScreen /></Guard>} />
           <Route path="/settings" element={<Guard session={session}><SettingsScreen /></Guard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

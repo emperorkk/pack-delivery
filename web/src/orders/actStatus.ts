@@ -1,5 +1,6 @@
 /** SOACTION.ACTSTATUS enum values. Matches block F.2. */
 export const ACT_STATUS = {
+  LOADING: 1,
   IN_PROGRESS: 2,
   COMPLETED: 3,
   POSTPONED: 4,
