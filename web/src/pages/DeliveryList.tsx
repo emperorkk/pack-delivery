@@ -118,11 +118,17 @@ export function DeliveryListScreen() {
                       {seq}
                     </span>
                   )}
-                  <span className="font-semibold">{row.customerName || row.findoc}</span>
+                  <span className="font-semibold">{row.customerName || row.fincode || row.findoc}</span>
                 </div>
-                <div className="mt-1 text-sm text-muted">{row.address}{row.city ? `, ${row.city}` : ''}</div>
+                <div className="mt-1 text-sm text-muted">
+                  {row.address}
+                  {row.city ? `, ${row.city}` : ''}
+                  {row.zip ? ` ${row.zip}` : ''}
+                  {row.district ? ` — ${row.district}` : ''}
+                </div>
+                {row.phone && <div className="mt-1 text-xs text-muted">☎ {row.phone}</div>}
                 <div className="mt-1 text-xs text-muted">
-                  FINDOC: {row.findoc}
+                  {row.fincode ?? `FINDOC ${row.findoc}`}
                   {row.total != null ? ` · ${row.total.toFixed(2)} €` : ''}
                 </div>
               </div>

@@ -61,18 +61,27 @@ export async function fetchOrderDetail(key: string): Promise<OrderDetail> {
   const lines = res.ITELINES ?? [];
   const lat = toNum(pick(head, 'LAT', 'LATITUDE'));
   const lon = toNum(pick(head, 'LON', 'LONGITUDE'));
+  const coords = lat != null && lon != null && !(lat === 0 && lon === 0) ? { lat, lon } : undefined;
   return {
     key,
     findoc: pick(head, 'FINDOC', 'FINCODE') ?? '',
     trdr: pick(head, 'TRDR') ?? '',
     trdbranch: pick(head, 'TRDBRANCH'),
-    customerName: pick(trd, 'NAME') ?? pick(head, 'TRDRNAME') ?? '',
-    address: pick(trd, 'ADDRESS', 'ADDR') ?? pick(head, 'ADDRESS') ?? '',
-    city: pick(trd, 'CITY', 'CITYNAME') ?? pick(head, 'CITY'),
-    zip: pick(trd, 'ZIP', 'POSTAL') ?? pick(head, 'ZIP'),
-    phone: pick(trd, 'PHONE01', 'PHONE', 'MOBILE'),
+    customerName:
+      pick(trd, 'NAME') ??
+      pick(head, 'TRDR_CUSTOMER_NAME', 'TRDRNAME') ??
+      '',
+    address:
+      pick(trd, 'ADDRESS', 'ADDR') ??
+      pick(head, 'SHIPPINGADDR', 'ADDRESS') ??
+      '',
+    city: pick(trd, 'CITY', 'CITYNAME') ?? pick(head, 'SHPCITY', 'CITY'),
+    zip: pick(trd, 'ZIP', 'POSTAL') ?? pick(head, 'SHPZIP', 'ZIP'),
+    phone:
+      pick(trd, 'PHONE01', 'PHONE', 'MOBILE') ??
+      pick(head, 'TRDR_CUSTOMER_PHONE'),
     trndate: pick(head, 'TRNDATE', 'DATE'),
-    coords: lat != null && lon != null ? { lat, lon } : undefined,
+    coords,
     comments: pick(head, 'COMMENTS', 'REMARKS'),
     lines: lines.map((l) => ({
       lineno: pick(l, 'LINENUM', 'LINENO'),

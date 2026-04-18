@@ -3,24 +3,39 @@ import { loadSettings } from '@/settings/store';
 import { loadSession } from '@/soft1/session';
 
 export type DeliveryRow = {
-  key: string;           // SALDOC row KEY (getData-compatible)
-  findoc: string;        // friendly order number
+  /**
+   * Lookup qualifier we pass to `getData`. When the CST returns a
+   * SALDOC row KEY we use it directly; otherwise we build
+   * `FINDOC=<n>` which Soft1 resolves against the alternate index.
+   */
+  key: string;
+  findoc: string;         // internal SALDOC.FINDOC (used by SOACTION writes)
+  fincode?: string;       // human-readable order code (ΔΑ...)
   trdr: string;
   trdbranch?: string;
   customerName: string;
+  phone?: string;
+  afm?: string;
   address: string;
   city?: string;
   zip?: string;
-  phone?: string;
+  district?: string;
+  country?: string;       // name half of the BGINTCOUNTRY pipe pair
   trndate?: string;
   total?: number;
   coords?: { lat: number; lon: number };
-  actstatus?: number;    // existing SOACTION status if any
-  soactionKey?: string;  // from server, if known
+  actstatus?: number;
+  soactionKey?: string;
 };
 
 type RawRow = Record<string, unknown>;
-type ListingResponse = { rows?: RawRow[]; ROWS?: RawRow[]; DATA?: RawRow[] };
+type ListingResponse = {
+  data?: RawRow[];
+  rows?: RawRow[];
+  ROWS?: RawRow[];
+  DATA?: RawRow[];
+  count?: number;
+};
 
 function pick(r: RawRow, ...keys: string[]): string | undefined {
   for (const k of keys) {
@@ -36,22 +51,43 @@ function toNum(v: string | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+/** Soft1 returns `"0"` for both axes when no geocode is stored. */
+function toCoords(lat: number | undefined, lon: number | undefined) {
+  if (lat == null || lon == null) return undefined;
+  if (lat === 0 && lon === 0) return undefined;
+  return { lat, lon };
+}
+
+function splitPipe(v: string | undefined): string | undefined {
+  if (!v) return undefined;
+  const parts = v.split('|');
+  return parts[1] ?? parts[0];
+}
+
 export function mapRow(r: RawRow): DeliveryRow {
+  const findoc = pick(r, 'FINDOC', 'FINCODENUM') ?? '';
+  const explicitKey = pick(r, 'KEY', 'SALDOC');
+  const key = explicitKey ?? (findoc ? `FINDOC=${findoc}` : '');
   const lat = toNum(pick(r, 'LAT', 'LATITUDE'));
   const lon = toNum(pick(r, 'LON', 'LONGITUDE'));
   return {
-    key: pick(r, 'KEY', 'SALDOC') ?? '',
-    findoc: pick(r, 'FINDOC', 'FINCODE', 'FINCODENUM') ?? '',
+    key,
+    findoc,
+    fincode: pick(r, 'FINCODE'),
     trdr: pick(r, 'TRDR') ?? '',
     trdbranch: pick(r, 'TRDBRANCH'),
-    customerName: pick(r, 'TRDRNAME', 'NAME', 'CUSTOMER') ?? '',
-    address: pick(r, 'ADDRESS', 'ADDR') ?? '',
-    city: pick(r, 'CITY', 'CITYNAME'),
-    zip: pick(r, 'ZIP', 'POSTAL'),
-    phone: pick(r, 'PHONE01', 'PHONE', 'MOBILE'),
+    customerName:
+      pick(r, 'TRDR_CUSTOMER_NAME', 'TRDRNAME', 'NAME', 'CUSTOMER') ?? '',
+    phone: pick(r, 'TRDR_CUSTOMER_PHONE', 'PHONE01', 'PHONE', 'MOBILE'),
+    afm: pick(r, 'TRDR_CUSTOMER_AFM', 'AFM'),
+    address: pick(r, 'SHIPPINGADDR', 'ADDRESS', 'ADDR') ?? '',
+    city: pick(r, 'SHPCITY', 'CITY', 'CITYNAME'),
+    zip: pick(r, 'SHPZIP', 'ZIP', 'POSTAL'),
+    district: pick(r, 'SHPDISTRICT', 'DISTRICT'),
+    country: splitPipe(pick(r, 'BGINTCOUNTRY', 'COUNTRY')),
     trndate: pick(r, 'TRNDATE', 'DATE'),
     total: toNum(pick(r, 'AMOUNT', 'TOTAL', 'SUMAMNT')),
-    coords: lat != null && lon != null ? { lat, lon } : undefined,
+    coords: toCoords(lat, lon),
     actstatus: pick(r, 'ACTSTATUS') != null ? Number(pick(r, 'ACTSTATUS')) : undefined,
     soactionKey: pick(r, 'SOACTION', 'SOACTIONKEY')
   };
@@ -66,6 +102,6 @@ export async function fetchDeliveryList(): Promise<DeliveryRow[]> {
     SOREDIR: settings.soredir,
     ACTOR: s.driverRefId
   });
-  const rows = res.rows ?? res.ROWS ?? res.DATA ?? [];
-  return rows.map(mapRow).filter((r) => r.key);
+  const rows = res.data ?? res.rows ?? res.ROWS ?? res.DATA ?? [];
+  return rows.map(mapRow).filter((r) => r.findoc);
 }
