@@ -55,7 +55,8 @@ function buildBody(w: SoactionWrite): Record<string, unknown> {
     service: 'setData',
     OBJECT: 'SOACTION',
     KEY: w.kind === 'insert' ? '' : w.soactionKey,
-    DATA: { SOACTION: [head] }
+    DATA: { SOACTION: [head] },
+    LOCATEINFO: 'SOACTION:SOACTION,ACTSTATUS'
   };
 }
 

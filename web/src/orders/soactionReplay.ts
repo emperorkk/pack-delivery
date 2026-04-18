@@ -37,7 +37,8 @@ export async function replaySoactionWrite(
     service: 'setData',
     OBJECT: 'SOACTION',
     KEY: key,
-    DATA: { SOACTION: [head] }
+    DATA: { SOACTION: [head] },
+    LOCATEINFO: 'SOACTION:SOACTION,ACTSTATUS'
   };
 
   try {
