@@ -41,7 +41,8 @@ export function SettingsScreen() {
             <TextInput
               label={t('settings.soredir')}
               value={settings.soredir}
-              onChange={(e) => setSettings({ ...settings, soredir: e.target.value })}
+              readOnly
+              disabled
             />
             <TextInput
               label={t('settings.seriesUpdate')}
