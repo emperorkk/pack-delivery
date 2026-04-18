@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { fetchOrderDetail, type OrderDetail } from '@/orders/detail';
 import { googleMapsDestinationUrl } from '@/orders/optimize';
 import { Banner, Button, Card, Header, Spinner } from '@/ui/primitives';
@@ -11,6 +11,8 @@ export function OrderDetailScreen() {
   const { t } = useTranslation();
   const { key } = useParams();
   const nav = useNavigate();
+  const location = useLocation();
+  const autoOpenStatus = (location.state as { openStatus?: boolean } | null)?.openStatus === true;
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -21,12 +23,13 @@ export function OrderDetailScreen() {
       try {
         const d = await fetchOrderDetail(decodeURIComponent(key));
         setOrder(d);
+        if (autoOpenStatus) setModalOpen(true);
         void pushGeo('open-order');
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
       }
     })();
-  }, [key]);
+  }, [key, autoOpenStatus]);
 
   if (!order && !error) {
     return (

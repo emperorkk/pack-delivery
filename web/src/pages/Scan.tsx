@@ -19,7 +19,10 @@ export function ScanScreen() {
     void pushGeo('scan');
     const hit = await resolveBarcode(text);
     if (hit) {
-      nav(`/orders/${encodeURIComponent(hit.key)}`, { replace: true });
+      nav(`/orders/${encodeURIComponent(hit.key)}`, {
+        replace: true,
+        state: { openStatus: true }
+      });
     } else {
       setError(t('scan.noMatch'));
       setBusy(false);
