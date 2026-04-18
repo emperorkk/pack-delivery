@@ -84,9 +84,7 @@ export function OrderDetailScreen() {
                 {order.lines.map((l, i) => (
                   <li key={i} className="flex justify-between gap-2 border-b border-border py-1 last:border-b-0">
                     <span>{l.itemName || l.itemCode || `#${i + 1}`}</span>
-                    <span className="text-muted">
-                      {l.qty ?? ''} × {l.price != null ? l.price.toFixed(2) : ''}
-                    </span>
+                    <span className="text-muted">{l.qty ?? ''}</span>
                   </li>
                 ))}
               </ul>
