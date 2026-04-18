@@ -6,6 +6,7 @@ export type OrderLine = {
   itemCode?: string;
   itemName?: string;
   qty?: number;
+  unit?: string;
   price?: number;
   amount?: number;
 };
@@ -23,6 +24,7 @@ export type OrderDetail = {
   trndate?: string;
   coords?: { lat: number; lon: number };
   comments?: string;
+  payment?: string;
   lines: OrderLine[];
   totals: { net?: number; vat?: number; gross?: number };
 };
@@ -36,6 +38,15 @@ function pick(r: Raw | undefined, ...keys: string[]): string | undefined {
     if (v != null && String(v).trim() !== '') return String(v);
   }
   return undefined;
+}
+
+/** Soft1 emits many reference fields as "<id>|<label>" (e.g.
+ *  "121|km", "1006|Πίστωση 120 ημερών"). Return the human label half,
+ *  or the whole string if there is no pipe. */
+function pipeLabel(v: string | undefined): string | undefined {
+  if (v == null) return undefined;
+  const i = v.indexOf('|');
+  return i >= 0 ? v.slice(i + 1).trim() || undefined : v.trim() || undefined;
 }
 
 function toNum(v: string | undefined): number | undefined {
@@ -94,12 +105,14 @@ export async function fetchOrderDetail(key: string): Promise<OrderDetail> {
     trndate: pick(head, 'TRNDATE', 'DATE'),
     coords,
     comments: pick(head, 'COMMENTS', 'REMARKS') ?? paymentComment,
+    payment: pipeLabel(pick(head, 'PAYMENT')),
     lines: lines.map((l) => ({
       lineno: pick(l, 'LINENUM', 'LINENO'),
       mtrl: pick(l, 'MTRL'),
       itemCode: pick(l, 'MTRL_ITEM_CODE', 'MTRL_MTRL_CODE', 'CODE', 'ITEM'),
       itemName: pick(l, 'MTRL_ITEM_NAME', 'MTRL_MTRL_NAME', 'NAME', 'DESCRIPTION'),
       qty: toNum(pick(l, 'QTY1', 'QTY')),
+      unit: pipeLabel(pick(l, 'MTRUNIT', 'MTRL_ITEM_MTRUNIT1', 'MTRL_MTRL_MTRUNIT1')),
       price: toNum(pick(l, 'PRICE', 'PRICE01')),
       amount: toNum(pick(l, 'LINEVAL', 'AMOUNT'))
     })),

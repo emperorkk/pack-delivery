@@ -84,7 +84,10 @@ export function OrderDetailScreen() {
                 {order.lines.map((l, i) => (
                   <li key={i} className="flex justify-between gap-2 border-b border-border py-1 last:border-b-0">
                     <span>{l.itemName || l.itemCode || `#${i + 1}`}</span>
-                    <span className="text-muted">{l.qty ?? ''}</span>
+                    <span className="text-muted">
+                      {l.qty ?? ''}
+                      {l.unit ? ` ${l.unit}` : ''}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -93,6 +96,7 @@ export function OrderDetailScreen() {
             <Card>
               <div className="text-sm font-semibold">{t('detail.totals')}</div>
               <div className="mt-2 text-sm">
+                {order.payment && <div className="text-muted">{order.payment}</div>}
                 {order.totals.gross != null && (
                   <div className="font-semibold">Total: {order.totals.gross.toFixed(2)}</div>
                 )}
