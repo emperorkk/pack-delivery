@@ -6,9 +6,45 @@ import { DriversScreen } from './pages/Drivers';
 import { isAdminSessionActive } from './adminSession';
 
 export function AdminApp() {
-  // We track whether the admin session is currently active so that sign-out
-  // from any page triggers a redirect here without a full reload.
+  return (
+    <Routes>
+      <Route path="/admin" element={<Navigate to="/admin/deliveries" replace />} />
+      <Route path="/admin/login" element={<AdminLoginScreen />} />
+      <Route
+        path="/admin/deliveries"
+        element={
+          <AdminGuard>
+            <FleetDeliveriesScreen />
+          </AdminGuard>
+        }
+      />
+      <Route
+        path="/admin/drivers"
+        element={
+          <AdminGuard>
+            <DriversScreen />
+          </AdminGuard>
+        }
+      />
+      <Route path="*" element={<Navigate to="/admin/login" replace />} />
+    </Routes>
+  );
+}
+
+/**
+ * Each guard reads `isAdminSessionActive()` at mount time — which matters
+ * because the admin flag is written right before `nav('/admin/...')`, so a
+ * fresh read always sees the true value. The event listeners keep the
+ * guard in sync with later changes (sign-out, another tab signing out,
+ * etc.).
+ */
+function AdminGuard({ children }: { children: React.ReactNode }) {
   const [active, setActive] = useState<boolean>(() => isAdminSessionActive());
+  const nav = useNavigate();
+
+  useEffect(() => {
+    if (!active) nav('/admin/login', { replace: true });
+  }, [active, nav]);
 
   useEffect(() => {
     const handler = () => setActive(isAdminSessionActive());
@@ -20,42 +56,6 @@ export function AdminApp() {
     };
   }, []);
 
-  return (
-    <Routes>
-      <Route path="/admin" element={<Navigate to="/admin/deliveries" replace />} />
-      <Route path="/admin/login" element={<AdminLoginScreen />} />
-      <Route
-        path="/admin/deliveries"
-        element={
-          <AdminGuard active={active}>
-            <FleetDeliveriesScreen />
-          </AdminGuard>
-        }
-      />
-      <Route
-        path="/admin/drivers"
-        element={
-          <AdminGuard active={active}>
-            <DriversScreen />
-          </AdminGuard>
-        }
-      />
-      <Route path="*" element={<Navigate to="/admin/login" replace />} />
-    </Routes>
-  );
-}
-
-function AdminGuard({
-  active,
-  children
-}: {
-  active: boolean;
-  children: React.ReactNode;
-}) {
-  const nav = useNavigate();
-  useEffect(() => {
-    if (!active) nav('/admin/login', { replace: true });
-  }, [active, nav]);
   if (!active) return null;
   return <>{children}</>;
 }
