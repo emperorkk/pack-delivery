@@ -151,5 +151,27 @@
   "admin.settings.presentation": "Appearance",
   "admin.settings.saved": "Saved.",
   "admin.settings.sharedHint": "These values live under pd.settings and are shared with the driver PWA.",
-  "admin.status.1": "Loading"
+  "admin.status.1": "Loading",
+
+  "admin.view.table": "Table",
+  "admin.view.lanes": "Lanes",
+  "admin.lanes.unassigned": "Unassigned",
+  "admin.lanes.pickDrivers": "Select drivers to see lanes.",
+  "admin.lanes.pickDriversLabel": "Drivers visible in the lanes board",
+
+  "admin.distribute.button": "Distribute…",
+  "admin.distribute.title": "Distribute deliveries",
+  "admin.distribute.selectDrivers": "Drivers to include",
+  "admin.distribute.scope": "What to reassign",
+  "admin.distribute.scope.unassignedOnly": "Only unassigned deliveries",
+  "admin.distribute.scope.redistribute": "Redistribute everything across selected drivers",
+  "admin.distribute.preview": "Preview",
+  "admin.distribute.previewTotal": "{n} delivery/ies will move",
+  "admin.distribute.pickDriver": "Pick at least one driver.",
+  "admin.distribute.nothingToAssign": "Nothing to distribute under the current scope.",
+  "admin.distribute.col.stops": "Stops",
+  "admin.distribute.confirm": "Distribute {n}",
+
+  "admin.sla.overdue": "Overdue",
+  "admin.sla.dueSoon": "Due soon"
 }

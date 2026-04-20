@@ -37,20 +37,20 @@ body,
   padding: 8px 12px 16px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--fg);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
-.admin-nav-brand::before {
-  content: '';
-  width: 10px;
-  height: 10px;
-  border-radius: 9999px;
-  background: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+.admin-nav-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: block;
+  box-shadow: 0 0 0 1px var(--border), 0 4px 10px -4px rgba(0, 0, 0, 0.3);
+  background: var(--surface);
 }
 
 .admin-nav a {
@@ -382,4 +382,286 @@ body,
 
 @keyframes admin-spin {
   to { transform: rotate(360deg); }
+}
+
+/* ──────────────── Lanes (kanban) ──────────────── */
+
+.admin-lanes {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  align-items: flex-start;
+}
+
+.admin-lane {
+  flex: 0 0 280px;
+  max-height: 70dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.admin-lane-over {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface-2));
+}
+
+.admin-lane-header {
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 40%, transparent);
+  gap: 8px;
+}
+
+.admin-lane-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.admin-lane-subtitle {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.admin-lane-count {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--fg);
+  border-radius: 9999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.admin-lane-body {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  min-height: 80px;
+}
+
+.admin-card-sm {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: grab;
+  user-select: none;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: box-shadow 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.admin-card-sm:hover {
+  border-color: var(--accent);
+}
+
+.admin-card-sm:active {
+  cursor: grabbing;
+}
+
+.admin-card-dragging {
+  opacity: 0.5;
+}
+
+.admin-card-pending {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.admin-card-sm-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-card-sm-body {
+  color: var(--fg);
+}
+
+.admin-card-sm-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* ──────────────── SLA badges ──────────────── */
+
+.admin-sla-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.admin-sla-badge.admin-sla-overdue {
+  background: color-mix(in srgb, var(--danger) 20%, transparent);
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 50%, transparent);
+}
+
+.admin-sla-badge.admin-sla-dueSoon {
+  background: color-mix(in srgb, var(--warn) 20%, transparent);
+  color: var(--warn);
+  border: 1px solid color-mix(in srgb, var(--warn) 50%, transparent);
+}
+
+.admin-card-sm.admin-sla-overdue {
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.admin-card-sm.admin-sla-dueSoon {
+  box-shadow: inset 3px 0 0 var(--warn);
+}
+
+.admin-row-overdue {
+  background: color-mix(in srgb, var(--danger) 7%, transparent);
+}
+
+.admin-row-dueSoon {
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+}
+
+/* ──────────────── View-mode toggle ──────────────── */
+
+.admin-viewmode {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-viewmode button {
+  background: var(--surface-2);
+  color: var(--muted);
+  border: none;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  min-height: 30px;
+}
+
+.admin-viewmode button.active {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+/* ──────────────── Modal ──────────────── */
+
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, #000 55%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.admin-modal {
+  width: 100%;
+  max-width: 640px;
+  max-height: 85dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 40px 120px -40px rgba(0,0,0,0.7);
+}
+
+.admin-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-modal-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.admin-modal-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.admin-modal-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.admin-modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.admin-driver-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 6px;
+}
+
+.admin-driver-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  background: var(--surface-2);
+}
+
+.admin-driver-check:hover {
+  border-color: var(--accent);
+}
+
+.admin-driver-check input {
+  margin: 0;
+}
+
+.admin-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
 }

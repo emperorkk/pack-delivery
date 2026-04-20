@@ -14,6 +14,9 @@ import { Soft1SessionInvalidError } from '@/soft1/errors';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '@/i18n/provider';
 import { clearAdminFlag } from '../adminSession';
+import { FleetLanes } from '../lanes/FleetLanes';
+import { DistributeModal } from '../distribute/DistributeModal';
+import { slaFor, type SlaState } from '../sla';
 import {
   isoToYmd,
   loadAdminFilters,
@@ -57,6 +60,12 @@ export function FleetDeliveriesScreen() {
   const [pending, setPending] = useState<PendingMap>({});
   const [search, setSearch] = useState('');
   const [driverFilter, setDriverFilter] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'table' | 'lanes'>('table');
+  const [distributeOpen, setDistributeOpen] = useState(false);
+  // Which drivers get a lane in Lanes view. Defaults to all activeToday,
+  // but the dispatcher can pare the board down to the subset they're
+  // actually dispatching today.
+  const [laneDriverRefids, setLaneDriverRefids] = useState<Set<string> | null>(null);
   const stoppedRef = useRef(false);
 
   const driverByRefid = useMemo(() => {
@@ -80,6 +89,11 @@ export function FleetDeliveriesScreen() {
         if (cancelled) return;
         setDrivers(drvs);
         setShipments(ships);
+        // Seed the lane-visibility set the first time drivers arrive —
+        // default to every driver who is active today.
+        setLaneDriverRefids((cur) =>
+          cur ?? new Set(drvs.filter((d) => d.activeToday).map((d) => d.refid))
+        );
         // Seed shipment selection with "all" the first time we see the list.
         setFilters((f) => {
           if (f.shipments.length > 0) {
@@ -187,6 +201,58 @@ export function FleetDeliveriesScreen() {
     }
   }
 
+  /**
+   * Bulk reassign invoked by the Distribute modal. Runs the individual
+   * reassigns in small parallel batches so we don't DOS Soft1 with a
+   * hundred concurrent requests, optimistically updates the table along
+   * the way, and re-polls once at the end so the authoritative state
+   * replaces our optimistic one.
+   */
+  async function onBulkAssign(plan: Array<{ findoc: string; actor: string }>) {
+    if (plan.length === 0) return;
+    // Mark everything pending up-front so the table greys the affected
+    // rows even before the first request resolves.
+    setPending((p) => {
+      const next = { ...p };
+      for (const a of plan) next[a.findoc] = a.actor;
+      return next;
+    });
+    // Optimistic: apply every assignment to the local rows so the board
+    // / table reflects the new state without waiting for the poll.
+    setRows((list) => {
+      if (!list) return list;
+      const byFindoc = new Map(plan.map((a) => [a.findoc, a.actor]));
+      return list.map((r) => {
+        const target = byFindoc.get(r.findoc);
+        return target === undefined
+          ? r
+          : { ...r, actor: target || undefined };
+      });
+    });
+
+    const batchSize = 4;
+    let firstError: unknown = null;
+    for (let i = 0; i < plan.length; i += batchSize) {
+      const batch = plan.slice(i, i + batchSize);
+      const results = await Promise.allSettled(
+        batch.map((a) => reassignDelivery(a.findoc, a.actor))
+      );
+      results.forEach((res, j) => {
+        if (res.status === 'rejected' && firstError == null) {
+          firstError = res.reason;
+          // eslint-disable-next-line no-console
+          console.error('reassignDelivery failed for', batch[j].findoc, res.reason);
+        }
+      });
+    }
+
+    setPending({});
+    void load();
+    if (firstError) {
+      throw firstError instanceof Error ? firstError : new Error(String(firstError));
+    }
+  }
+
   const filtered = useMemo(() => {
     if (!rows) return null;
     const rawQ = search.trim().toLowerCase();
@@ -250,6 +316,14 @@ export function FleetDeliveriesScreen() {
               {refreshing && <span className="admin-spinner" aria-label="loading" />}
             </span>
           )}
+          <button
+            type="button"
+            className="admin-btn admin-btn-primary"
+            onClick={() => setDistributeOpen(true)}
+            disabled={!rows || rows.length === 0 || drivers.length === 0}
+          >
+            {t('admin.distribute.button')}
+          </button>
           <button
             type="button"
             className="admin-btn"
@@ -388,11 +462,33 @@ export function FleetDeliveriesScreen() {
 
       <div className="admin-card">
         <div className="admin-card-header">
-          <div className="admin-card-title">
-            {t('admin.deliveries.countOf', {
-              shown: filtered?.length ?? 0,
-              total: rows?.length ?? 0
-            })}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="admin-card-title">
+              {t('admin.deliveries.countOf', {
+                shown: filtered?.length ?? 0,
+                total: rows?.length ?? 0
+              })}
+            </div>
+            <div className="admin-viewmode" role="tablist">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === 'table'}
+                className={viewMode === 'table' ? 'active' : ''}
+                onClick={() => setViewMode('table')}
+              >
+                {t('admin.view.table')}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === 'lanes'}
+                className={viewMode === 'lanes' ? 'active' : ''}
+                onClick={() => setViewMode('lanes')}
+              >
+                {t('admin.view.lanes')}
+              </button>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <input
@@ -436,7 +532,7 @@ export function FleetDeliveriesScreen() {
           <div style={{ padding: 24 }} className="admin-muted">
             {t('admin.deliveries.noMatches')}
           </div>
-        ) : (
+        ) : viewMode !== 'table' ? null : (
           <div style={{ overflowX: 'auto' }}>
             <table className="admin-table">
               <thead>
@@ -457,8 +553,15 @@ export function FleetDeliveriesScreen() {
                   const busy = pending[r.findoc] != null;
                   const sLabel =
                     r.actstatus != null ? t(statusLabelKey(r.actstatus)) : null;
+                  const sla: SlaState = slaFor(r, new Date());
+                  const rowCls =
+                    sla === 'overdue'
+                      ? 'admin-row-overdue'
+                      : sla === 'dueSoon'
+                        ? 'admin-row-dueSoon'
+                        : '';
                   return (
-                    <tr key={r.findoc}>
+                    <tr key={r.findoc} className={rowCls}>
                       <td>
                         <strong>{r.fincode ?? r.findoc}</strong>
                         {r.fincode && r.findoc !== r.fincode && (
@@ -549,7 +652,58 @@ export function FleetDeliveriesScreen() {
             </table>
           </div>
         )}
+
+        {viewMode === 'lanes' &&
+          filtersHydrated &&
+          rows != null &&
+          filters.shipments.length > 0 &&
+          filtered != null &&
+          filtered.length > 0 && (
+            <div style={{ padding: 12, borderTop: '1px solid var(--border)' }}>
+              <div className="admin-muted" style={{ fontSize: 12, marginBottom: 6 }}>
+                {t('admin.lanes.pickDriversLabel')}
+              </div>
+              <div className="admin-chips" style={{ marginBottom: 12 }}>
+                {drivers.map((d) => {
+                  const on = laneDriverRefids?.has(d.refid) ?? false;
+                  return (
+                    <button
+                      key={d.refid}
+                      type="button"
+                      className={on ? 'admin-chip admin-chip-on' : 'admin-chip'}
+                      onClick={() =>
+                        setLaneDriverRefids((s) => {
+                          const next = new Set(s ?? []);
+                          if (next.has(d.refid)) next.delete(d.refid);
+                          else next.add(d.refid);
+                          return next;
+                        })
+                      }
+                    >
+                      {d.name}
+                      {!d.activeToday ? t('admin.deliveries.offToday') : ''}
+                    </button>
+                  );
+                })}
+              </div>
+              <FleetLanes
+                rows={filtered}
+                drivers={drivers}
+                visibleDriverRefids={[...(laneDriverRefids ?? new Set())]}
+                onReassign={(row, actor) => void onAssign(row, actor)}
+                pending={pending}
+              />
+            </div>
+          )}
       </div>
+
+      <DistributeModal
+        open={distributeOpen}
+        rows={filtered ?? rows ?? []}
+        drivers={drivers}
+        onClose={() => setDistributeOpen(false)}
+        onConfirm={onBulkAssign}
+      />
     </AdminShell>
   );
 }

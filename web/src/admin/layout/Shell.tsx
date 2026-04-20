@@ -26,7 +26,16 @@ export function AdminShell({
   return (
     <div className="admin-shell">
       <aside className="admin-nav">
-        <div className="admin-nav-brand">{t('admin.nav.brand')}</div>
+        <div className="admin-nav-brand">
+          <img
+            src="/android-icon-192x192.png"
+            alt=""
+            className="admin-nav-logo"
+            width={28}
+            height={28}
+          />
+          <span>{t('admin.nav.brand')}</span>
+        </div>
         <NavLink
           to="/admin/deliveries"
           className={({ isActive }) => (isActive ? 'active' : undefined)}

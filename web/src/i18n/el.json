@@ -151,5 +151,27 @@
   "admin.settings.presentation": "Εμφάνιση",
   "admin.settings.saved": "Αποθηκεύτηκε.",
   "admin.settings.sharedHint": "Οι τιμές αυτές αποθηκεύονται στο pd.settings και μοιράζονται με την εφαρμογή οδηγού.",
-  "admin.status.1": "Φόρτωση"
+  "admin.status.1": "Φόρτωση",
+
+  "admin.view.table": "Πίνακας",
+  "admin.view.lanes": "Πίστες",
+  "admin.lanes.unassigned": "Μη ανατεθειμένες",
+  "admin.lanes.pickDrivers": "Επιλέξτε οδηγούς για να εμφανιστούν πίστες.",
+  "admin.lanes.pickDriversLabel": "Οδηγοί στις πίστες",
+
+  "admin.distribute.button": "Διανομή…",
+  "admin.distribute.title": "Διανομή παραδόσεων",
+  "admin.distribute.selectDrivers": "Οδηγοί που συμμετέχουν",
+  "admin.distribute.scope": "Τι θα ανατεθεί",
+  "admin.distribute.scope.unassignedOnly": "Μόνο μη ανατεθειμένες",
+  "admin.distribute.scope.redistribute": "Αναδιανομή όλων στους επιλεγμένους οδηγούς",
+  "admin.distribute.preview": "Προεπισκόπηση",
+  "admin.distribute.previewTotal": "{n} παράδοση/εις θα μετακινηθούν",
+  "admin.distribute.pickDriver": "Επιλέξτε τουλάχιστον έναν οδηγό.",
+  "admin.distribute.nothingToAssign": "Δεν υπάρχουν παραδόσεις για ανάθεση στο τρέχον εύρος.",
+  "admin.distribute.col.stops": "Στάσεις",
+  "admin.distribute.confirm": "Διανομή {n}",
+
+  "admin.sla.overdue": "Εκπρόθεσμο",
+  "admin.sla.dueSoon": "Σύντομα"
 }
