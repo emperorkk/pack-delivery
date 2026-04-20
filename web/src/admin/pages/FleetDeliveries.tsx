@@ -189,19 +189,33 @@ export function FleetDeliveriesScreen() {
 
   const filtered = useMemo(() => {
     if (!rows) return null;
-    const q = search.trim().toLowerCase();
+    const rawQ = search.trim().toLowerCase();
+    // A squeezed copy of the query — lowercase with all non-alphanumeric
+    // characters stripped — lets "ORD 004864", "ord.004864" and "ord004864"
+    // all match the stored FINCODE "ORD.004864".
+    const squeezedQ = rawQ.replace(/[^\p{L}\p{N}]+/gu, '');
+    const hay = (s: string | undefined): string =>
+      (s ?? '').toLowerCase();
+    const match = (v: string | undefined): boolean => {
+      if (!v) return false;
+      const h = hay(v);
+      if (rawQ && h.includes(rawQ)) return true;
+      if (squeezedQ && h.replace(/[^\p{L}\p{N}]+/gu, '').includes(squeezedQ))
+        return true;
+      return false;
+    };
     return rows.filter((r) => {
       if (driverFilter === 'unassigned' && r.actor) return false;
       if (driverFilter && driverFilter !== 'unassigned' && r.actor !== driverFilter)
         return false;
-      if (!q) return true;
+      if (!rawQ) return true;
       return (
-        r.findoc.toLowerCase().includes(q) ||
-        (r.fincode?.toLowerCase().includes(q) ?? false) ||
-        r.customerName.toLowerCase().includes(q) ||
-        r.address.toLowerCase().includes(q) ||
-        (r.zip?.toLowerCase().includes(q) ?? false) ||
-        (r.city?.toLowerCase().includes(q) ?? false)
+        match(r.findoc) ||
+        match(r.fincode) ||
+        match(r.customerName) ||
+        match(r.address) ||
+        match(r.zip) ||
+        match(r.city)
       );
     });
   }, [rows, search, driverFilter]);
