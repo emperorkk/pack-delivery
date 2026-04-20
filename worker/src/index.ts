@@ -153,11 +153,32 @@ async function handleApi(req: Request, env: Env, url: URL): Promise<Response> {
   return proxied;
 }
 
+/**
+ * The admin SPA lives at /admin (HTML entry emitted by Vite as `admin.html`)
+ * and ships its own bundle. For any client-side navigation under /admin/...
+ * we need to serve `admin.html`, mirroring the driver PWA's SPA fallback
+ * to index.html (which the ASSETS binding handles for /). Static asset
+ * requests (`/assets/...`) fall through unchanged.
+ */
+async function handleAdminNavigation(req: Request, env: Env, url: URL): Promise<Response> {
+  // Requests for named files under /admin (e.g. a hypothetical /admin/foo.png)
+  // keep their path. We only rewrite extensionless navigations.
+  const last = url.pathname.split('/').pop() ?? '';
+  if (last.includes('.')) {
+    return env.ASSETS.fetch(req);
+  }
+  const rewritten = new Request(new URL('/admin.html', url).toString(), req);
+  return env.ASSETS.fetch(rewritten);
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
     if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
       return handleApi(req, env, url);
+    }
+    if (url.pathname === '/admin' || url.pathname.startsWith('/admin/')) {
+      return handleAdminNavigation(req, env, url);
     }
     // Everything else is the PWA: static assets + SPA fallback.
     return env.ASSETS.fetch(req);

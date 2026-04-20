@@ -8,6 +8,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // The driver PWA is the only entry we want registered as an installable
+      // offline-first app. The admin bundle is desktop-only, so keep the SW
+      // focused on `/` and explicitly skip the /admin entry so the Workbox
+      // navigation handler never falls back to index.html for /admin routes.
+      filename: 'sw.js',
       includeAssets: [
         'favicon.ico',
         'favicon-16x16.png',
@@ -46,12 +51,22 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,xml,webmanifest,woff2}'],
-        navigateFallbackDenylist: [/^\/api\//]
+        // Don't let the driver PWA's SW intercept admin.html navigations:
+        // those should always hit the Worker, which serves the admin SPA.
+        navigateFallbackDenylist: [/^\/api\//, /^\/admin(\/|$)/]
       }
     })
   ],
   resolve: {
     alias: { '@': path.resolve(__dirname, 'src') }
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        admin: path.resolve(__dirname, 'admin.html')
+      }
+    }
   },
   server: {
     port: 5173,
