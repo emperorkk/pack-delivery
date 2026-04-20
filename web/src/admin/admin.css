@@ -305,6 +305,62 @@ body,
   border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
+.admin-filter-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  padding: 16px;
+}
+
+@media (max-width: 960px) {
+  .admin-filter-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-filter-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.admin-filter-dates > * {
+  min-width: 160px;
+}
+
+.admin-filter-shipments {
+  min-width: 0;
+}
+
+.admin-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-chip {
+  padding: 6px 10px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.admin-chip:hover {
+  color: var(--fg);
+  border-color: var(--accent);
+}
+
+.admin-chip-on {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: var(--accent);
+  color: var(--fg);
+}
+
 .admin-spinner {
   display: inline-block;
   width: 14px;
