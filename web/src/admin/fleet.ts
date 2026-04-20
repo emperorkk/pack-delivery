@@ -10,9 +10,12 @@ import { loadSettings } from '@/settings/store';
 
 // ──────────────── isAdmin ────────────────
 
-type IsAdminRaw =
-  | { isAdmin?: boolean; ISADMIN?: boolean | string | number }
-  | { rows?: Array<{ ISADMIN?: boolean | string | number }> };
+type IsAdminResponse = {
+  success?: boolean;
+  IsAdmin?: boolean | number | string;
+  REFID?: number | string;
+  NAME?: string;
+};
 
 function truthy(v: unknown): boolean {
   if (v === true) return true;
@@ -24,14 +27,14 @@ function truthy(v: unknown): boolean {
   return false;
 }
 
-export async function isAdmin(refid: string): Promise<boolean> {
-  const res = await cstCall<IsAdminRaw>('IsAdmin', { REFID: refid });
-  const top = res as Record<string, unknown>;
-  if ('isAdmin' in top) return truthy(top.isAdmin);
-  if ('ISADMIN' in top) return truthy(top.ISADMIN);
-  const firstRow = (top.rows as Array<Record<string, unknown>> | undefined)?.[0];
-  if (firstRow && 'ISADMIN' in firstRow) return truthy(firstRow.ISADMIN);
-  return false;
+/**
+ * The CST authenticates the caller via the session clientID we already
+ * pass on every request — no REFID argument required.
+ * Response shape: `{ success: true, IsAdmin: 1, REFID: 264, NAME: "WEB" }`.
+ */
+export async function isAdmin(): Promise<boolean> {
+  const res = await cstCall<IsAdminResponse>('IsAdmin', {});
+  return truthy(res.IsAdmin);
 }
 
 // ──────────────── getDrivers ────────────────

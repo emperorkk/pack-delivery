@@ -32,7 +32,7 @@ export function AdminLoginScreen() {
       setError('Signed in but no session found.');
       return;
     }
-    const ok = await isAdmin(s.driverRefId);
+    const ok = await isAdmin();
     if (!ok) {
       clearAdminFlag();
       setError('This account does not have dispatcher access.');
