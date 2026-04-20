@@ -118,7 +118,7 @@
   "admin.filters.summary": "{count}/{total} τρόποι αποστολής",
   "admin.deliveries.title": "Παραδόσεις στόλου",
   "admin.deliveries.countOf": "Παραδόσεις · {shown} από {total}",
-  "admin.deliveries.search": "Αναζήτηση FINDOC / πελάτη / διεύθυνσης / ΤΚ / πόλης",
+  "admin.deliveries.search": "Αναζήτηση Παραστατικού / FINDOC / πελάτη / διεύθυνσης / ΤΚ / πόλης",
   "admin.deliveries.allDrivers": "Όλοι οι οδηγοί",
   "admin.deliveries.unassigned": "Μη ανατεθειμένες",
   "admin.deliveries.selectShipment": "Επιλέξτε τουλάχιστον έναν τρόπο αποστολής για να φορτωθεί η λίστα.",

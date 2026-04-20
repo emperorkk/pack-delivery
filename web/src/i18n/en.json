@@ -118,7 +118,7 @@
   "admin.filters.summary": "{count}/{total} shipment methods",
   "admin.deliveries.title": "Fleet deliveries",
   "admin.deliveries.countOf": "Deliveries · {shown} of {total}",
-  "admin.deliveries.search": "Search FINDOC / customer / address / ZIP / city",
+  "admin.deliveries.search": "Search FINCODE / FINDOC / customer / address / ZIP / city",
   "admin.deliveries.allDrivers": "All drivers",
   "admin.deliveries.unassigned": "Unassigned",
   "admin.deliveries.selectShipment": "Select at least one shipment method above to load the fleet.",
