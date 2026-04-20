@@ -87,6 +87,14 @@ body,
   gap: 8px;
 }
 
+.admin-version {
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: color-mix(in srgb, var(--muted) 60%, transparent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 .admin-main {
   display: flex;
   flex-direction: column;

@@ -2,8 +2,15 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'node:path';
+import pkg from './package.json' with { type: 'json' };
 
 export default defineConfig({
+  // Exposed at compile time so both the driver PWA and the admin SPA can
+  // render the same version string without importing package.json into the
+  // bundle. Bump `version` in package.json on every release.
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version)
+  },
   plugins: [
     react(),
     VitePWA({

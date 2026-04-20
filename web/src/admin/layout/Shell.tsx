@@ -54,6 +54,7 @@ export function AdminShell({
           <button type="button" className="admin-btn" onClick={onSignOut}>
             {t('admin.nav.signOut')}
           </button>
+          <div className="admin-version">v{__APP_VERSION__}</div>
         </div>
       </aside>
       <main className="admin-main">
