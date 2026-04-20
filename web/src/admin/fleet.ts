@@ -240,18 +240,31 @@ export async function getDeliveryListingForFleet(
 
 type ReassignResponse = {
   success?: boolean;
-  soactionKey?: string;
-  SOACTION?: string;
-  KEY?: string;
-  error?: string;
+  count?: number;
+  data?: Array<{
+    SOACTION?: string;
+    ACTOR?: string;
+    SERIES?: string;
+  }>;
 };
 
-export async function reassignDelivery(findoc: string, actor: string): Promise<void> {
+/**
+ * Tenant contract: `{ SERIES, FINDOC, ACTOR }` — the CST writes a fresh
+ * SOACTION row for the handover and returns the new SOACTION key in
+ * `data[0].SOACTION`. We bubble that key up so the caller (the fleet
+ * table) can, if it wants, store it without waiting for the next poll.
+ * `cstCall` already throws on `success: false` via checkEnvelope, so we
+ * only need the happy-path shape here.
+ */
+export async function reassignDelivery(
+  findoc: string,
+  actor: string
+): Promise<{ soactionKey?: string }> {
+  const settings = loadSettings();
   const res = await cstCall<ReassignResponse>('reassignDelivery', {
+    SERIES: settings.series,
     FINDOC: findoc,
     ACTOR: actor
   });
-  if (res.success === false) {
-    throw new Error(res.error ?? 'reassignDelivery failed');
-  }
+  return { soactionKey: res.data?.[0]?.SOACTION };
 }
