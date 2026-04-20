@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { clearSession, loadSession } from '@/soft1/session';
+import { useTranslation } from '@/i18n/provider';
 import { clearAdminFlag } from '../adminSession';
 
 export function AdminShell({
@@ -12,6 +13,7 @@ export function AdminShell({
   headerRight?: ReactNode;
   children: ReactNode;
 }) {
+  const { t } = useTranslation();
   const nav = useNavigate();
   const session = loadSession();
 
@@ -24,27 +26,33 @@ export function AdminShell({
   return (
     <div className="admin-shell">
       <aside className="admin-nav">
-        <div className="admin-nav-brand">Pack Delivery — Admin</div>
+        <div className="admin-nav-brand">{t('admin.nav.brand')}</div>
         <NavLink
           to="/admin/deliveries"
           className={({ isActive }) => (isActive ? 'active' : undefined)}
         >
-          Deliveries
+          {t('admin.nav.deliveries')}
         </NavLink>
         <NavLink
           to="/admin/drivers"
           className={({ isActive }) => (isActive ? 'active' : undefined)}
         >
-          Drivers
+          {t('admin.nav.drivers')}
+        </NavLink>
+        <NavLink
+          to="/admin/settings"
+          className={({ isActive }) => (isActive ? 'active' : undefined)}
+        >
+          {t('admin.nav.settings')}
         </NavLink>
         <div className="admin-nav-footer">
           <div>
-            Signed in as <strong>{session?.username ?? '—'}</strong>
+            {t('admin.nav.signedInAs')} <strong>{session?.username ?? '—'}</strong>
             <br />
             REFID {session?.driverRefId ?? '—'}
           </div>
           <button type="button" className="admin-btn" onClick={onSignOut}>
-            Sign out
+            {t('admin.nav.signOut')}
           </button>
         </div>
       </aside>

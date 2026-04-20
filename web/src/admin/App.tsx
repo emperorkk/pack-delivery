@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { AdminLoginScreen } from './pages/AdminLogin';
 import { FleetDeliveriesScreen } from './pages/FleetDeliveries';
 import { DriversScreen } from './pages/Drivers';
+import { AdminSettingsScreen } from './pages/AdminSettings';
 import { isAdminSessionActive } from './adminSession';
 
 export function AdminApp() {
@@ -23,6 +24,14 @@ export function AdminApp() {
         element={
           <AdminGuard>
             <DriversScreen />
+          </AdminGuard>
+        }
+      />
+      <Route
+        path="/admin/settings"
+        element={
+          <AdminGuard>
+            <AdminSettingsScreen />
           </AdminGuard>
         }
       />

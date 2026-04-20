@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { AdminShell } from '../layout/Shell';
 import { getDrivers, type DriverRow } from '../fleet';
+import { useTranslation } from '@/i18n/provider';
 
 export function DriversScreen() {
+  const { t } = useTranslation();
   const [drivers, setDrivers] = useState<DriverRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,10 +23,10 @@ export function DriversScreen() {
   }, []);
 
   return (
-    <AdminShell title="Drivers">
+    <AdminShell title={t('admin.drivers.title')}>
       <div className="admin-card">
         <div className="admin-card-header">
-          <div className="admin-card-title">Roster</div>
+          <div className="admin-card-title">{t('admin.drivers.roster')}</div>
         </div>
         {error && (
           <div className="admin-banner error" style={{ margin: 12 }}>
@@ -33,20 +35,20 @@ export function DriversScreen() {
         )}
         {drivers == null ? (
           <div style={{ padding: 24 }} className="admin-muted">
-            <span className="admin-spinner" aria-label="loading" /> Loading drivers…
+            <span className="admin-spinner" aria-label="loading" /> {t('admin.drivers.loading')}
           </div>
         ) : drivers.length === 0 ? (
           <div style={{ padding: 24 }} className="admin-muted">
-            No drivers returned by getDrivers.
+            {t('admin.drivers.empty')}
           </div>
         ) : (
           <table className="admin-table">
             <thead>
               <tr>
-                <th>REFID</th>
-                <th>Name</th>
-                <th>Active today</th>
-                <th>Last fix</th>
+                <th>{t('admin.drivers.col.refid')}</th>
+                <th>{t('admin.drivers.col.name')}</th>
+                <th>{t('admin.drivers.col.active')}</th>
+                <th>{t('admin.drivers.col.lastFix')}</th>
               </tr>
             </thead>
             <tbody>
@@ -56,9 +58,9 @@ export function DriversScreen() {
                   <td>{d.name}</td>
                   <td>
                     {d.activeToday ? (
-                      <span className="admin-status s-3">Active</span>
+                      <span className="admin-status s-3">{t('admin.drivers.active')}</span>
                     ) : (
-                      <span className="admin-status s-6">Off</span>
+                      <span className="admin-status s-6">{t('admin.drivers.off')}</span>
                     )}
                   </td>
                   <td>

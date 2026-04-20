@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { signIn } from '@/soft1/client';
 import { Soft1Error, Soft1UnreachableError } from '@/soft1/errors';
 import { clearSession, loadSession } from '@/soft1/session';
+import { useTranslation } from '@/i18n/provider';
 import { isAdmin } from '../fleet';
 import {
   clearAdminFlag,
@@ -11,6 +12,7 @@ import {
 } from '../adminSession';
 
 export function AdminLoginScreen() {
+  const { t } = useTranslation();
   const nav = useNavigate();
   const [serialNumber, setSerialNumber] = useState('');
   const [appId, setAppId] = useState('1199');
@@ -29,13 +31,13 @@ export function AdminLoginScreen() {
   async function verifyAdminAndRedirect(): Promise<void> {
     const s = loadSession();
     if (!s) {
-      setError('Signed in but no session found.');
+      setError(t('admin.login.noSession'));
       return;
     }
     const ok = await isAdmin();
     if (!ok) {
       clearAdminFlag();
-      setError('This account does not have dispatcher access.');
+      setError(t('admin.login.notAuth'));
       return;
     }
     writeAdminFlag(s.driverRefId, s.clientID);
@@ -56,7 +58,7 @@ export function AdminLoginScreen() {
       await verifyAdminAndRedirect();
     } catch (err) {
       if (err instanceof Soft1UnreachableError) {
-        setError('Soft1 endpoint is unreachable. Check the serial number.');
+        setError(t('login.unreachable'));
       } else if (err instanceof Soft1Error) {
         setError(err.message);
       } else {
@@ -72,10 +74,10 @@ export function AdminLoginScreen() {
   return (
     <div className="admin-login">
       <form onSubmit={onSubmit} className="admin-login-card">
-        <h1>Dispatcher sign-in</h1>
+        <h1>{t('admin.login.title')}</h1>
         {error && <div className="admin-banner error">{error}</div>}
         <label className="admin-login-field">
-          Serial number
+          {t('login.serialNumber')}
           <input
             className="admin-input"
             inputMode="numeric"
@@ -87,7 +89,7 @@ export function AdminLoginScreen() {
           />
         </label>
         <label className="admin-login-field">
-          App ID
+          {t('login.appId')}
           <input
             className="admin-input"
             inputMode="numeric"
@@ -98,7 +100,7 @@ export function AdminLoginScreen() {
           />
         </label>
         <label className="admin-login-field">
-          Username
+          {t('login.username')}
           <input
             className="admin-input"
             autoComplete="username"
@@ -108,7 +110,7 @@ export function AdminLoginScreen() {
           />
         </label>
         <label className="admin-login-field">
-          Password
+          {t('login.password')}
           <input
             className="admin-input"
             type="password"
@@ -123,7 +125,7 @@ export function AdminLoginScreen() {
           className="admin-btn admin-btn-primary"
           disabled={busy}
         >
-          {busy ? <span className="admin-spinner" aria-label="loading" /> : 'Sign in'}
+          {busy ? <span className="admin-spinner" aria-label="loading" /> : t('login.submit')}
         </button>
       </form>
     </div>

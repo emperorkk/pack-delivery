@@ -12,6 +12,7 @@ import {
 } from '../fleet';
 import { Soft1SessionInvalidError } from '@/soft1/errors';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from '@/i18n/provider';
 import { clearAdminFlag } from '../adminSession';
 import {
   isoToYmd,
@@ -25,18 +26,13 @@ const POLL_MS = 30_000;
 
 type PendingMap = Record<string, string | undefined>;
 
-const STATUS_LABEL: Record<number, string> = {
-  1: 'Loading',
-  2: 'In progress',
-  3: 'Delivered',
-  4: 'Failed',
-  5: 'Returned',
-  6: 'Cancelled'
-};
-
-function statusLabel(n: number | undefined): string | null {
-  if (n == null) return null;
-  return STATUS_LABEL[n] ?? `Status ${n}`;
+/**
+ * Status 1 is the "Loading onto truck" phase; the driver PWA uses
+ * status.2..status.6 for the outcome statuses. The admin reuses those keys
+ * and adds its own admin.status.1 for the truck-loading state.
+ */
+function statusLabelKey(n: number): string {
+  return n === 1 ? 'admin.status.1' : `status.${n}`;
 }
 
 function formatDate(s: string | undefined): string {
@@ -48,6 +44,7 @@ function formatDate(s: string | undefined): string {
 }
 
 export function FleetDeliveriesScreen() {
+  const { t } = useTranslation();
   const nav = useNavigate();
   const [rows, setRows] = useState<FleetDeliveryRow[] | null>(null);
   const [drivers, setDrivers] = useState<DriverRow[]>([]);
@@ -176,9 +173,10 @@ export function FleetDeliveriesScreen() {
           : list
       );
       setError(
-        `Reassign of ${row.fincode ?? row.findoc} failed: ${
-          err instanceof Error ? err.message : String(err)
-        }`
+        t('admin.deliveries.reassignFailed', {
+          code: row.fincode ?? row.findoc,
+          error: err instanceof Error ? err.message : String(err)
+        })
       );
     } finally {
       setPending((p) => {
@@ -228,12 +226,12 @@ export function FleetDeliveriesScreen() {
 
   return (
     <AdminShell
-      title="Fleet deliveries"
+      title={t('admin.deliveries.title')}
       headerRight={
         <>
           {lastLoadedAt && (
             <span>
-              Updated {lastLoadedAt.toLocaleTimeString()}
+              {t('admin.header.updated', { time: lastLoadedAt.toLocaleTimeString() })}
               {refreshing ? ' · ' : ''}
               {refreshing && <span className="admin-spinner" aria-label="loading" />}
             </span>
@@ -244,16 +242,20 @@ export function FleetDeliveriesScreen() {
             onClick={() => void load()}
             disabled={refreshing || !filters.shipments.length}
           >
-            Refresh
+            {t('admin.header.refresh')}
           </button>
         </>
       }
     >
       <div className="admin-card" style={{ marginBottom: 16 }}>
         <div className="admin-card-header">
-          <div className="admin-card-title">Filters</div>
+          <div className="admin-card-title">{t('admin.filters.title')}</div>
           <div className="admin-muted" style={{ fontSize: 12 }}>
-            {filters.shipments.length}/{shipments.length} shipment methods ·{' '}
+            {t('admin.filters.summary', {
+              count: filters.shipments.length,
+              total: shipments.length
+            })}
+            {' · '}
             {filters.dateFrom === filters.dateTo
               ? formatDate(ymdToIso(filters.dateFrom))
               : `${formatDate(ymdToIso(filters.dateFrom))} → ${formatDate(ymdToIso(filters.dateTo))}`}
@@ -262,7 +264,7 @@ export function FleetDeliveriesScreen() {
         <div className="admin-filter-body">
           <div className="admin-filter-dates">
             <label className="admin-login-field">
-              Delivery date from
+              {t('admin.filters.dateFrom')}
               <input
                 type="date"
                 className="admin-input"
@@ -276,7 +278,7 @@ export function FleetDeliveriesScreen() {
               />
             </label>
             <label className="admin-login-field">
-              Delivery date to
+              {t('admin.filters.dateTo')}
               <input
                 type="date"
                 className="admin-input"
@@ -291,7 +293,7 @@ export function FleetDeliveriesScreen() {
             </label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span className="admin-muted" style={{ fontSize: 12 }}>
-                Quick ranges
+                {t('admin.filters.quickRanges')}
               </span>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button
@@ -301,23 +303,23 @@ export function FleetDeliveriesScreen() {
                     setFilters((f) => ({ ...f, dateFrom: todayYmd(), dateTo: todayYmd() }))
                   }
                 >
-                  Today
+                  {t('admin.filters.today')}
                 </button>
                 <button
                   type="button"
                   className="admin-btn"
                   onClick={() => {
-                    const t = new Date();
-                    const tmr = new Date(t);
-                    tmr.setDate(t.getDate() + 1);
+                    const d0 = new Date();
+                    const d1 = new Date(d0);
+                    d1.setDate(d0.getDate() + 1);
                     const ymd = (d: Date) =>
                       `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(
                         d.getDate()
                       ).padStart(2, '0')}`;
-                    setFilters((f) => ({ ...f, dateFrom: ymd(t), dateTo: ymd(tmr) }));
+                    setFilters((f) => ({ ...f, dateFrom: ymd(d0), dateTo: ymd(d1) }));
                   }}
                 >
-                  Today + tomorrow
+                  {t('admin.filters.todayTomorrow')}
                 </button>
               </div>
             </div>
@@ -333,20 +335,21 @@ export function FleetDeliveriesScreen() {
               }}
             >
               <span className="admin-muted" style={{ fontSize: 12 }}>
-                Shipment methods
+                {t('admin.filters.shipmentMethods')}
               </span>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button type="button" className="admin-btn" onClick={allShipments}>
-                  All
+                  {t('admin.filters.all')}
                 </button>
                 <button type="button" className="admin-btn" onClick={noShipments}>
-                  None
+                  {t('admin.filters.none')}
                 </button>
               </div>
             </div>
             {shipments.length === 0 ? (
               <div className="admin-muted" style={{ fontSize: 13 }}>
-                <span className="admin-spinner" aria-label="loading" /> Loading shipment methods…
+                <span className="admin-spinner" aria-label="loading" />{' '}
+                {t('admin.filters.loadingShipments')}
               </div>
             ) : (
               <div className="admin-chips">
@@ -372,13 +375,16 @@ export function FleetDeliveriesScreen() {
       <div className="admin-card">
         <div className="admin-card-header">
           <div className="admin-card-title">
-            Deliveries · {filtered?.length ?? 0} of {rows?.length ?? 0}
+            {t('admin.deliveries.countOf', {
+              shown: filtered?.length ?? 0,
+              total: rows?.length ?? 0
+            })}
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <input
               className="admin-input"
               style={{ minWidth: 220 }}
-              placeholder="Search FINDOC / customer / address / ZIP / city"
+              placeholder={t('admin.deliveries.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -387,8 +393,8 @@ export function FleetDeliveriesScreen() {
               value={driverFilter}
               onChange={(e) => setDriverFilter(e.target.value)}
             >
-              <option value="">All drivers</option>
-              <option value="unassigned">Unassigned</option>
+              <option value="">{t('admin.deliveries.allDrivers')}</option>
+              <option value="unassigned">{t('admin.deliveries.unassigned')}</option>
               {drivers.map((d) => (
                 <option key={d.refid} value={d.refid}>
                   {d.name}
@@ -406,36 +412,37 @@ export function FleetDeliveriesScreen() {
 
         {!filtersHydrated || rows == null ? (
           <div style={{ padding: 24 }} className="admin-muted">
-            <span className="admin-spinner" aria-label="loading" /> Loading fleet…
+            <span className="admin-spinner" aria-label="loading" /> {t('admin.deliveries.loading')}
           </div>
         ) : filters.shipments.length === 0 ? (
           <div style={{ padding: 24 }} className="admin-muted">
-            Select at least one shipment method above to load the fleet.
+            {t('admin.deliveries.selectShipment')}
           </div>
         ) : filtered && filtered.length === 0 ? (
           <div style={{ padding: 24 }} className="admin-muted">
-            No deliveries match the current filter.
+            {t('admin.deliveries.noMatches')}
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>FINCODE</th>
-                  <th>Deliver on</th>
-                  <th>Customer</th>
-                  <th>Address</th>
-                  <th>ZIP / City</th>
-                  <th>Window</th>
-                  <th>Status</th>
-                  <th style={{ minWidth: 200 }}>Driver</th>
+                  <th>{t('admin.col.findoc')}</th>
+                  <th>{t('admin.col.deliverOn')}</th>
+                  <th>{t('admin.col.customer')}</th>
+                  <th>{t('admin.col.address')}</th>
+                  <th>{t('admin.col.zipCity')}</th>
+                  <th>{t('admin.col.window')}</th>
+                  <th>{t('admin.col.status')}</th>
+                  <th style={{ minWidth: 200 }}>{t('admin.col.driver')}</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered?.map((r) => {
                   const selected = pending[r.findoc] ?? r.actor ?? '';
                   const busy = pending[r.findoc] != null;
-                  const sLabel = statusLabel(r.actstatus);
+                  const sLabel =
+                    r.actstatus != null ? t(statusLabelKey(r.actstatus)) : null;
                   return (
                     <tr key={r.findoc}>
                       <td>
@@ -495,7 +502,7 @@ export function FleetDeliveriesScreen() {
                           onChange={(e) => void onAssign(r, e.target.value)}
                           style={{ minWidth: 180 }}
                         >
-                          <option value="">— Unassigned —</option>
+                          <option value="">{t('admin.deliveries.assignMarker')}</option>
                           {drivers.map((d) => (
                             <option
                               key={d.refid}
@@ -503,12 +510,13 @@ export function FleetDeliveriesScreen() {
                               disabled={!d.activeToday && d.refid !== r.actor}
                             >
                               {d.name}
-                              {!d.activeToday ? ' (off today)' : ''}
+                              {!d.activeToday ? t('admin.deliveries.offToday') : ''}
                             </option>
                           ))}
                           {r.actor && !driverByRefid.has(r.actor) && (
                             <option value={r.actor}>
-                              {r.actorName ?? `Unknown driver (${r.actor})`}
+                              {r.actorName ??
+                                t('admin.deliveries.unknownDriver', { refid: r.actor })}
                             </option>
                           )}
                         </select>
