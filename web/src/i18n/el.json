@@ -173,5 +173,9 @@
   "admin.distribute.confirm": "Διανομή {n}",
 
   "admin.sla.overdue": "Εκπρόθεσμο",
-  "admin.sla.dueSoon": "Σύντομα"
+  "admin.sla.dueSoon": "Σύντομα",
+
+  "admin.route.endAt": "Τέλος διαδρομής",
+  "admin.route.endNone": "— Αποφασίζει ο οδηγός —",
+  "admin.route.noOrigin": "Δεν υπάρχει τελευταία θέση οδηγού — η σειρά ακολουθεί τη σειρά άφιξης μέχρι να έρθει στίγμα."
 }

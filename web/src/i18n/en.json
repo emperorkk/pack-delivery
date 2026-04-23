@@ -173,5 +173,9 @@
   "admin.distribute.confirm": "Distribute {n}",
 
   "admin.sla.overdue": "Overdue",
-  "admin.sla.dueSoon": "Due soon"
+  "admin.sla.dueSoon": "Due soon",
+
+  "admin.route.endAt": "End at",
+  "admin.route.endNone": "— Driver decides —",
+  "admin.route.noOrigin": "No last driver fix — order is by arrival until a fix is available."
 }

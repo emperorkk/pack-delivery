@@ -487,6 +487,73 @@ body,
   gap: 6px;
 }
 
+.admin-card-sm-lead {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.admin-seq {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--fg);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.admin-seq-empty {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+}
+
+.admin-seq-final {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+}
+
+.admin-card-final {
+  border-style: solid;
+  box-shadow:
+    inset 0 0 0 1px var(--accent),
+    0 4px 14px -6px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.admin-lane-endpoint {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 40%, transparent);
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-lane-endpoint label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-lane-endpoint .admin-select {
+  width: 100%;
+}
+
+.admin-lane-hint {
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+}
+
 .admin-card-sm-body {
   color: var(--fg);
 }

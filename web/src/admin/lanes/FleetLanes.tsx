@@ -12,15 +12,16 @@ import {
 import { useTranslation } from '@/i18n/provider';
 import type { DriverRow, FleetDeliveryRow } from '../fleet';
 import { slaFor, type SlaState } from '../sla';
+import { routeStops, type RouteStop } from '../routing';
 
 /**
  * Desktop kanban for reassignment. One lane per driver the dispatcher
  * ticked in the header (+ a permanent "Unassigned" lane on the left).
  * Dropping a card onto another lane calls `onReassign(findoc, targetRefid)`.
  *
- * The lanes are presentation-only: they read rows from the parent and
- * delegate every mutation back via `onReassign`. The parent is already
- * doing optimistic updates + polling, so no local state lives here.
+ * Per-lane endpoint picker: the dispatcher can pin one of that driver's
+ * deliveries as the final stop. The NN ordering then excludes the pinned
+ * stop from the walk and appends it at the end with a flag.
  */
 
 const UNASSIGNED = '__unassigned__';
@@ -28,10 +29,22 @@ const UNASSIGNED = '__unassigned__';
 export type FleetLanesProps = {
   rows: FleetDeliveryRow[];
   drivers: DriverRow[];
-  /** Which driver REFIDs to render as lanes. Order = display order. */
   visibleDriverRefids: string[];
   onReassign: (row: FleetDeliveryRow, actor: string) => void;
   pending: Record<string, string | undefined>;
+  /** Map of driver REFID → pinned final-stop FINDOC. */
+  finalStops: Record<string, string | undefined>;
+  onSetFinalStop: (refid: string, findoc: string | undefined) => void;
+};
+
+type Lane = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  driverRefid?: string;   // undefined for the Unassigned lane
+  origin?: { lat: number; lon: number } | null;
+  stops: RouteStop[];
+  pickableRows: FleetDeliveryRow[];
 };
 
 export function FleetLanes({
@@ -39,7 +52,9 @@ export function FleetLanes({
   drivers,
   visibleDriverRefids,
   onReassign,
-  pending
+  pending,
+  finalStops,
+  onSetFinalStop
 }: FleetLanesProps) {
   const { t } = useTranslation();
 
@@ -47,29 +62,42 @@ export function FleetLanes({
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
   );
 
-  const lanes = useMemo(() => {
+  const lanes: Lane[] = useMemo(() => {
     const byActor = new Map<string, FleetDeliveryRow[]>();
     byActor.set(UNASSIGNED, []);
     for (const refid of visibleDriverRefids) byActor.set(refid, []);
     for (const r of rows) {
       const key = r.actor && byActor.has(r.actor) ? r.actor : UNASSIGNED;
-      // Still surface rows assigned to a hidden driver as "unassigned"
-      // visually — otherwise they'd vanish in Lanes view without a hint.
       byActor.get(key)!.push(r);
     }
-    return {
-      unassigned: byActor.get(UNASSIGNED) ?? [],
-      driverLanes: visibleDriverRefids.map((refid) => {
-        const d = drivers.find((x) => x.refid === refid);
-        return {
-          refid,
-          name: d?.name ?? refid,
-          activeToday: d?.activeToday ?? true,
-          rows: byActor.get(refid) ?? []
-        };
-      })
-    };
-  }, [rows, drivers, visibleDriverRefids]);
+
+    const unassignedRows = byActor.get(UNASSIGNED) ?? [];
+    const out: Lane[] = [
+      {
+        id: UNASSIGNED,
+        title: t('admin.lanes.unassigned'),
+        stops: unassignedRows.map((r) => ({ row: r, seq: null, isFinal: false })),
+        pickableRows: []
+      }
+    ];
+
+    for (const refid of visibleDriverRefids) {
+      const d = drivers.find((x) => x.refid === refid);
+      const laneRows = byActor.get(refid) ?? [];
+      const origin = d?.lastFix ?? null;
+      const finalFindoc = finalStops[refid];
+      out.push({
+        id: refid,
+        title: d?.name ?? refid,
+        subtitle: d?.activeToday === false ? t('admin.deliveries.offToday').trim() : undefined,
+        driverRefid: refid,
+        origin,
+        stops: routeStops(laneRows, origin, finalFindoc),
+        pickableRows: laneRows
+      });
+    }
+    return out;
+  }, [rows, drivers, visibleDriverRefids, finalStops, t]);
 
   function onDragEnd(e: DragEndEvent) {
     const target = e.over?.id;
@@ -85,70 +113,92 @@ export function FleetLanes({
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEnd}>
       <div className="admin-lanes">
-        <Lane
-          id={UNASSIGNED}
-          title={t('admin.lanes.unassigned')}
-          count={lanes.unassigned.length}
-          rows={lanes.unassigned}
-          pending={pending}
-        />
-        {lanes.driverLanes.map((lane) => (
-          <Lane
-            key={lane.refid}
-            id={lane.refid}
-            title={lane.name}
-            subtitle={!lane.activeToday ? t('admin.deliveries.offToday').trim() : undefined}
-            count={lane.rows.length}
-            rows={lane.rows}
+        {lanes.map((lane) => (
+          <LaneView
+            key={lane.id}
+            lane={lane}
             pending={pending}
+            finalStopFindoc={
+              lane.driverRefid ? finalStops[lane.driverRefid] : undefined
+            }
+            onSetFinalStop={(findoc) =>
+              lane.driverRefid && onSetFinalStop(lane.driverRefid, findoc)
+            }
           />
         ))}
-        {lanes.driverLanes.length === 0 && (
+        {lanes.length === 1 && (
           <div className="admin-muted" style={{ padding: 24 }}>
             {t('admin.lanes.pickDrivers')}
           </div>
         )}
       </div>
-      <DragOverlayShim />
+      <DragOverlay dropAnimation={null} />
     </DndContext>
   );
 }
 
-function Lane({
-  id,
-  title,
-  subtitle,
-  count,
-  rows,
-  pending
+function LaneView({
+  lane,
+  pending,
+  finalStopFindoc,
+  onSetFinalStop
 }: {
-  id: string;
-  title: string;
-  subtitle?: string;
-  count: number;
-  rows: FleetDeliveryRow[];
+  lane: Lane;
   pending: Record<string, string | undefined>;
+  finalStopFindoc: string | undefined;
+  onSetFinalStop: (findoc: string | undefined) => void;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id });
+  const { t } = useTranslation();
+  const { setNodeRef, isOver } = useDroppable({ id: lane.id });
+  const canPickEnd = lane.driverRefid != null && lane.pickableRows.length >= 2;
+
   return (
     <div className={`admin-lane ${isOver ? 'admin-lane-over' : ''}`}>
       <div className="admin-lane-header">
         <div>
-          <div className="admin-lane-title">{title}</div>
-          {subtitle && <div className="admin-lane-subtitle">{subtitle}</div>}
+          <div className="admin-lane-title">{lane.title}</div>
+          {lane.subtitle && <div className="admin-lane-subtitle">{lane.subtitle}</div>}
         </div>
-        <span className="admin-lane-count">{count}</span>
+        <span className="admin-lane-count">{lane.pickableRows.length || lane.stops.length}</span>
       </div>
+      {canPickEnd && (
+        <div className="admin-lane-endpoint">
+          <label>
+            <span className="admin-muted">{t('admin.route.endAt')}</span>
+            <select
+              className="admin-select"
+              value={finalStopFindoc ?? ''}
+              onChange={(e) => onSetFinalStop(e.target.value || undefined)}
+            >
+              <option value="">{t('admin.route.endNone')}</option>
+              {lane.pickableRows.map((r) => (
+                <option key={r.findoc} value={r.findoc}>
+                  {(r.fincode ?? r.findoc) +
+                    (r.customerName ? ` — ${r.customerName}` : '')}
+                </option>
+              ))}
+            </select>
+          </label>
+          {!lane.origin && (
+            <div className="admin-lane-hint">{t('admin.route.noOrigin')}</div>
+          )}
+        </div>
+      )}
       <div ref={setNodeRef} className="admin-lane-body">
-        {rows.map((r) => (
-          <DraggableCard key={r.findoc} row={r} pending={pending[r.findoc] != null} />
+        {lane.stops.map((s) => (
+          <DraggableCard
+            key={s.row.findoc}
+            stop={s}
+            pending={pending[s.row.findoc] != null}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function DraggableCard({ row, pending }: { row: FleetDeliveryRow; pending: boolean }) {
+function DraggableCard({ stop, pending }: { stop: RouteStop; pending: boolean }) {
+  const { row, seq, isFinal } = stop;
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: row.findoc
   });
@@ -160,7 +210,8 @@ function DraggableCard({ row, pending }: { row: FleetDeliveryRow; pending: boole
         'admin-card-sm',
         slaClass(sla),
         isDragging ? 'admin-card-dragging' : '',
-        pending ? 'admin-card-pending' : ''
+        pending ? 'admin-card-pending' : '',
+        isFinal ? 'admin-card-final' : ''
       ]
         .filter(Boolean)
         .join(' ')}
@@ -168,8 +219,19 @@ function DraggableCard({ row, pending }: { row: FleetDeliveryRow; pending: boole
       {...listeners}
     >
       <div className="admin-card-sm-head">
-        <strong>{row.fincode ?? row.findoc}</strong>
-        {sla && <span className={`admin-sla-badge ${slaClass(sla)}`}>{slaLabel(sla)}</span>}
+        <span className="admin-card-sm-lead">
+          {isFinal ? (
+            <span className="admin-seq admin-seq-final" aria-label="final stop">
+              ⚑
+            </span>
+          ) : seq != null ? (
+            <span className="admin-seq">{seq}</span>
+          ) : (
+            <span className="admin-seq admin-seq-empty">·</span>
+          )}
+          <strong>{row.fincode ?? row.findoc}</strong>
+        </span>
+        {sla && <span className={`admin-sla-badge ${slaClass(sla)}`}>{slaGlyph(sla)}</span>}
       </div>
       <div className="admin-card-sm-body">{row.customerName || '—'}</div>
       <div className="admin-card-sm-meta">
@@ -185,22 +247,13 @@ function DraggableCard({ row, pending }: { row: FleetDeliveryRow; pending: boole
   );
 }
 
-function DragOverlayShim() {
-  // Overlay is left intentionally empty — dnd-kit doesn't *require* it,
-  // but rendering one avoids a layout jump when a card is grabbed.
-  return <DragOverlay dropAnimation={null} />;
-}
-
 function slaClass(s: SlaState): string {
   if (s === 'overdue') return 'admin-sla-overdue';
   if (s === 'dueSoon') return 'admin-sla-dueSoon';
   return '';
 }
 
-function slaLabel(s: SlaState): string {
-  // Labels are looked up via translation keys in the parent card, but
-  // for the small inline badge we want a single glyph that reads at a
-  // glance without crowding the card.
+function slaGlyph(s: SlaState): string {
   if (s === 'overdue') return '!';
   if (s === 'dueSoon') return '~';
   return '';

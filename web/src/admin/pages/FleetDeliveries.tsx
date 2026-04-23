@@ -17,6 +17,7 @@ import { clearAdminFlag } from '../adminSession';
 import { FleetLanes } from '../lanes/FleetLanes';
 import { DistributeModal } from '../distribute/DistributeModal';
 import { slaFor, type SlaState } from '../sla';
+import { loadFinalStops, setFinalStop } from '../finalStops';
 import {
   isoToYmd,
   loadAdminFilters,
@@ -66,6 +67,9 @@ export function FleetDeliveriesScreen() {
   // but the dispatcher can pare the board down to the subset they're
   // actually dispatching today.
   const [laneDriverRefids, setLaneDriverRefids] = useState<Set<string> | null>(null);
+  const [finalStops, setFinalStopsState] = useState<Record<string, string | undefined>>(
+    () => loadFinalStops()
+  );
   const stoppedRef = useRef(false);
 
   const driverByRefid = useMemo(() => {
@@ -692,6 +696,10 @@ export function FleetDeliveriesScreen() {
                 visibleDriverRefids={[...(laneDriverRefids ?? new Set())]}
                 onReassign={(row, actor) => void onAssign(row, actor)}
                 pending={pending}
+                finalStops={finalStops}
+                onSetFinalStop={(refid, findoc) =>
+                  setFinalStopsState(setFinalStop(refid, findoc))
+                }
               />
             </div>
           )}
